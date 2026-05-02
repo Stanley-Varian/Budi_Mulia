@@ -71,6 +71,7 @@
   gap: 2px;
   width: 100%;
   padding: 0 8px;
+  flex: 1;
 }
 
 .navItem {
@@ -260,7 +261,7 @@
 }
 
 /* ── Nav Logout ── */
-.navLogout { color: rgba(255,255,255,.5); cursor: pointer; border: none; background: none; font-family: 'Poppins', sans-serif; }
+.navLogout { color: rgba(255,255,255,.5); cursor: pointer; border: none; background: none; font-family: 'Poppins', sans-serif; width: 100%; display: flex; align-items: center; gap: 14px; padding: 0 10px; height: 44px; border-radius: 10px; margin-top: auto; }
 .navLogout:hover { background: rgba(239,68,68,.2) !important; color: #fca5a5 !important; }
 
 /* ── Modal Logout ── */
