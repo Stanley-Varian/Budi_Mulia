@@ -102,9 +102,9 @@
 .formGroup { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 .formRow { display: flex; gap: 12px; margin-bottom: 0; }
 .formLabel { font-size: 12px; font-weight: 600; color: #374151; }
-.formInput { padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; transition: border-color .2s; }
+.formInput { padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; transition: border-color .2s; background: white; }
 .formInput:focus { border-color: #2952cc; }
-.formTextarea { padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; resize: vertical; transition: border-color .2s; }
+.formTextarea { padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; resize: vertical; transition: border-color .2s; background: white;}
 .formTextarea:focus { border-color: #2952cc; }
 .formSelect { padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; background: white; cursor: pointer; width: 100%; }
 .formSelect:focus { border-color: #2952cc; }

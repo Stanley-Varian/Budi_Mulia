@@ -57,12 +57,12 @@
 .cardBtn { width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.7); border: none; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s, color .2s; }
 .cardBtn:hover { background: white; color: #2952cc; }
 .cardBottom { padding: 12px 18px 14px; background: white; border-top: 1px solid rgba(0,0,0,.04); display: flex; flex-direction: column; gap: 6px; }
-.cardInfo { display: flex; align-items: center; gap: 8px; }
+.cardInfo { display: flex; align-items: center; gap: 8px;}
 .cardMapel { font-size: 14px; font-weight: 700; color: #0f172a; }
 .cardKelas { font-size: 12px; font-weight: 600; color: #2952cc; background: #eff6ff; padding: 2px 8px; border-radius: 20px; }
 .cardMeta { display: flex; align-items: center; justify-content: space-between; }
 .cardSiswa { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b; }
-.cardUpdated { font-size: 11px; color: #94a3b8; }
+.cardUpdated { font-size: 11px; color: #94a3b8;}
 
 /* ── FAB ── */
 .fab { position: fixed; bottom: 28px; right: 28px; width: 52px; height: 52px; border-radius: 16px; background: #1e293b; color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.25); transition: background .2s, transform .2s; z-index: 50; }
@@ -73,17 +73,17 @@
 .modal { background: white; border-radius: 20px; padding: 28px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.2); display: flex; flex-direction: column; align-items: center; text-align: center; }
 .modalHeader { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; text-align: left; }
 .modalTitle { font-size: 17px; font-weight: 700; color: #0f172a; }
-.modalDesc { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 24px; }
+.modalDesc { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 24px;}
 .modalIconWrap { width: 60px; height: 60px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
 .closeBtn { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; flex-shrink: 0; transition: background .2s; }
 .closeBtn:hover { background: #e2e8f0; }
 
 /* ── Form ── */
-.formGroup { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; text-align: left; }
+.formGroup { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; text-align: left;}
 .formLabel { font-size: 12px; font-weight: 600; color: #374151; }
 .formSelect { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; background: white; cursor: pointer; transition: border-color .2s; }
 .formSelect:focus { border-color: #2952cc; }
-.formInput { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; transition: border-color .2s; }
+.formInput { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; color: #0f172a; outline: none; transition: border-color .2s; background: white;}
 .formInput:focus { border-color: #2952cc; }
 .formError { font-size: 12px; color: #dc2626; text-align: left; width: 100%; margin-bottom: 10px; }
 
