@@ -16,7 +16,6 @@ type Pengumuman = {
   penting: boolean;
 };
 
-// Ganti dengan fetch GET /api/pengumuman?kelas=10B
 const MOCK_DATA: Pengumuman[] = [
   {
     id: 1,
