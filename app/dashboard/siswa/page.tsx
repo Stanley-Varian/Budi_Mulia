@@ -1,19 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./dashboard-siswa.module.css";
+import { joinKelas, getMapelList } from "@/lib/api/siswa";
 
-const MAPEL = [
-  { id: 1, nama: "Matematika",       guru: "Bpk. Andi Saputra",   updatedAt: "Hari ini",    warna: "#dbeafe", icon: "math"  },
-  { id: 2, nama: "Bahasa Indonesia", guru: "Ibu Sari Dewi",        updatedAt: "Kemarin",     warna: "#fce7f3", icon: "book"  },
-  { id: 3, nama: "Bahasa Inggris",   guru: "Ibu Rina Marlina",     updatedAt: "Hari ini",    warna: "#d1fae5", icon: "book"  },
-  { id: 4, nama: "Fisika",           guru: "Bpk. Dedi Kurniawan",  updatedAt: "Kemarin",     warna: "#fef9c3", icon: "atom"  },
-  { id: 5, nama: "Kimia",            guru: "Ibu Wulandari",        updatedAt: "Hari ini",    warna: "#ede9fe", icon: "flask" },
-  { id: 6, nama: "Biologi",          guru: "Bpk. Hendra Gunawan",  updatedAt: "3 hari lalu", warna: "#ffedd5", icon: "leaf"  },
-  { id: 7, nama: "Sejarah",          guru: "Ibu Kartini",          updatedAt: "Hari ini",    warna: "#f0fdf4", icon: "clock" },
-  { id: 8, nama: "Ekonomi",          guru: "Bpk. Budi Santoso",    updatedAt: "2 hari lalu", warna: "#fdf2f8", icon: "chart" },
-];
+type Mapel = {
+  id: string | number;
+  mapel: string;
+  guru: string;
+  updatedAt: string;
+};
 
 const TABS = ["Baru", "Terbaru", "Minggu Ini", "Bulan Ini"];
 
@@ -37,15 +34,16 @@ const NAV = [
 ];
 
 function MapelIcon({ icon }: { icon: string }) {
-  switch (icon) {
-    case "math":  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><line x1="12" y1="5" x2="12" y2="19"/><circle cx="12" cy="12" r="9"/></svg>;
-    case "book":  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
-    case "atom":  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>;
-    case "flask": return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6l1 9H8L9 3z"/><path d="M8 12l-4 8h16l-4-8"/></svg>;
-    case "leaf":  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.67L2 21l1-2C4.53 15.67 8 9 17 8z"/><path d="M6 21c0-3.5 2-6 6-9"/></svg>;
-    case "clock": return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
-    default:      return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
-  }
+  const name = icon.toLowerCase();
+  if (name.includes("mat"))   return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><line x1="12" y1="5" x2="12" y2="19"/><circle cx="12" cy="12" r="9"/></svg>;
+  if (name.includes("indo") || name.includes("ingg") || name.includes("bhs") || name.includes("bah")) return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+  if (name.includes("fis"))   return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>;
+  if (name.includes("kim"))   return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6l1 9H8L9 3z"/><path d="M8 12l-4 8h16l-4-8"/></svg>;
+  if (name.includes("bio"))   return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 19.67L2 21l1-2C4.53 15.67 8 9 17 8z"/><path d="M6 21c0-3.5 2-6 6-9"/></svg>;
+  if (name.includes("sej") || name.includes("his")) return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+  if (name.includes("eko") || name.includes("aku")) return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
+  // default
+  return <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
 }
 
 export default function DashboardSiswa() {
@@ -53,6 +51,53 @@ export default function DashboardSiswa() {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState(1);
   const [showLogout, setShowLogout] = useState(false);
+
+  // ── Mapel dari backend ──
+  const [mapelList, setMapelList] = useState<Mapel[]>([]);
+  const [mapelLoading, setMapelLoading] = useState(true);
+  const [mapelError, setMapelError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMapelList()
+      .then((data) => setMapelList(data))
+      .catch((err) => setMapelError(err.message || "Gagal memuat data."))
+      .finally(() => setMapelLoading(false));
+  }, []);
+
+  // ── Join Kelas state ──
+  const [showJoin, setShowJoin] = useState(false);
+  const [kodeInput, setKodeInput] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
+
+  const handleJoinKelas = async () => {
+    if (!kodeInput.trim()) {
+      setJoinError("Kode kelas tidak boleh kosong.");
+      return;
+    }
+    setJoinLoading(true);
+    setJoinError(null);
+    setJoinSuccess(null);
+    try {
+      const kelas = await joinKelas(kodeInput);
+      setJoinSuccess(`Berhasil bergabung ke kelas ${kelas.nama || kelas.mapel}!`);
+      setKodeInput("");
+      // refresh daftar mapel
+      getMapelList().then((data) => setMapelList(data)).catch(() => null);
+    } catch (err: unknown) {
+      setJoinError(err instanceof Error ? err.message : "Gagal bergabung. Coba lagi.");
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
+  const handleCloseJoin = () => {
+    setShowJoin(false);
+    setKodeInput("");
+    setJoinError(null);
+    setJoinSuccess(null);
+  };
 
   return (
     <div className={styles.layout}>
@@ -121,6 +166,102 @@ export default function DashboardSiswa() {
         </div>
       )}
 
+      {/* ── Join Kelas Modal ── */}
+      {showJoin && (
+        <div className={styles.modalOverlay} onClick={handleCloseJoin}>
+          <div className={styles.joinModal} onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className={styles.joinModalHeader}>
+              <div className={styles.joinModalIconWrap}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <line x1="19" y1="8" x2="19" y2="14"/>
+                  <line x1="22" y1="11" x2="16" y2="11"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className={styles.joinModalTitle}>Gabung Kelas</h3>
+                <p className={styles.joinModalSubtitle}>Masukkan kode dari gurumu</p>
+              </div>
+              <button className={styles.joinModalClose} onClick={handleCloseJoin}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className={styles.joinModalBody}>
+              {/* Info hint */}
+              <div className={styles.joinHint}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2952cc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>Kode kelas bisa kamu minta langsung ke guru pengampu.</span>
+              </div>
+
+              {/* Input */}
+              <div className={styles.joinInputWrap}>
+                <label className={styles.joinLabel}>Kode Kelas</label>
+                <input
+                  className={`${styles.joinInput} ${joinError ? styles.joinInputError : ""} ${joinSuccess ? styles.joinInputSuccess : ""}`}
+                  type="text"
+                  placeholder="Contoh: MTK-2025-A"
+                  value={kodeInput}
+                  onChange={(e) => {
+                    setKodeInput(e.target.value.toUpperCase());
+                    setJoinError(null);
+                    setJoinSuccess(null);
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && !joinLoading && handleJoinKelas()}
+                  maxLength={20}
+                  autoFocus
+                  disabled={joinLoading || !!joinSuccess}
+                />
+                {joinError && (
+                  <div className={styles.joinFeedbackError}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {joinError}
+                  </div>
+                )}
+                {joinSuccess && (
+                  <div className={styles.joinFeedbackSuccess}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    {joinSuccess}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              {!joinSuccess ? (
+                <div className={styles.joinActions}>
+                  <button className={styles.cancelBtn} onClick={handleCloseJoin} disabled={joinLoading}>
+                    Batal
+                  </button>
+                  <button
+                    className={styles.joinBtn}
+                    onClick={handleJoinKelas}
+                    disabled={joinLoading || !kodeInput.trim()}
+                  >
+                    {joinLoading ? (
+                      <span className={styles.joinSpinner}/>
+                    ) : (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    )}
+                    {joinLoading ? "Memproses..." : "Gabung Sekarang"}
+                  </button>
+                </div>
+              ) : (
+                <button className={styles.joinBtn} style={{ width: "100%" }} onClick={handleCloseJoin}>
+                  Tutup
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Main ── */}
       <div className={`${styles.main} ${expanded ? styles.mainShifted : ""}`}>
 
@@ -158,29 +299,58 @@ export default function DashboardSiswa() {
 
         {/* Grid */}
         <div className={styles.content}>
-          <div className={styles.grid}>
-            {MAPEL.map((mapel) => (
-              <a key={mapel.id} href={`/dashboard/siswa/materi/${mapel.id}`} className={styles.card}>
-                <div className={styles.cardTop} style={{ background: mapel.warna }}>
-                  <div className={styles.cardIconWrap}>
-                    <MapelIcon icon={mapel.icon} />
+          {mapelLoading ? (
+            <div className={styles.loadingWrap}>
+              <span className={styles.loadingSpinner}/>
+              <span className={styles.loadingText}>Memuat kelas...</span>
+            </div>
+          ) : mapelError ? (
+            <div className={styles.errorWrap}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>{mapelError}</span>
+            </div>
+          ) : (
+            <div className={styles.grid}>
+              {mapelList.map((mapel) => (
+                <a key={mapel.id} href={`/dashboard/siswa/materi/${encodeURIComponent(mapel.mapel)}`} className={styles.card}>
+                  <div className={styles.cardTop}>
+                    <div className={styles.cardIconWrap}>
+                      <MapelIcon icon={mapel.mapel} />
+                    </div>
+                    <div className={styles.cardActions}>
+                      <button className={styles.cardBtn} title="Lihat Materi" onClick={(e) => e.preventDefault()}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </button>
+                      <button className={styles.cardBtn} title="Info" onClick={(e) => e.preventDefault()}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      </button>
+                    </div>
                   </div>
-                  <div className={styles.cardActions}>
-                    <button className={styles.cardBtn} title="Lihat Materi" onClick={(e) => e.preventDefault()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    </button>
-                    <button className={styles.cardBtn} title="Info" onClick={(e) => e.preventDefault()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    </button>
+                  <div className={styles.cardBottom}>
+                    <span className={styles.cardName}>{mapel.mapel}</span>
+                    <span className={styles.cardUpdated}>{mapel.guru}</span>
                   </div>
+                </a>
+              ))}
+
+              {/* ── Card Gabung Kelas ── */}
+              <button className={styles.cardJoin} onClick={() => setShowJoin(true)}>
+                <div className={styles.cardJoinInner}>
+                  <div className={styles.cardJoinIconWrap}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2952cc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <line x1="19" y1="8" x2="19" y2="14"/>
+                      <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                  </div>
+                  <span className={styles.cardJoinLabel}>Gabung Kelas</span>
+                  <span className={styles.cardJoinSub}>Masukkan kode dari guru</span>
                 </div>
-                <div className={styles.cardBottom}>
-                  <span className={styles.cardName}>{mapel.nama}</span>
-                  <span className={styles.cardUpdated}>Updated {mapel.updatedAt}</span>
-                </div>
-              </a>
-            ))}
-          </div>
+                <div className={styles.cardJoinPlus}>+</div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

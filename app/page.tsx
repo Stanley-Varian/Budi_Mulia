@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
+import { login } from "@/lib/api/siswa";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,22 +21,16 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.message || "Username atau password salah.");
-        setLoading(false);
-        return;
-      }
-      if (data.role === "admin") router.push("/dashboard/admin");
-      else if (data.role === "guru") router.push("/dashboard/guru");
+      const user = await login(username, password);
+      if (user.role === "admin") router.push("/dashboard/admin");
+      else if (user.role === "guru") router.push("/dashboard/guru");
       else router.push("/dashboard/siswa");
-    } catch {
-      setError("Terjadi kesalahan. Coba beberapa saat lagi.");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Terjadi kesalahan. Coba beberapa saat lagi.");
+      }
       setLoading(false);
     }
   };
@@ -47,20 +42,50 @@ export default function LoginPage() {
         {/* Logo — ganti SVG dengan Image next/image + logo asli */}
         <div className={styles.logo}>
           <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3Z" fill="#2952cc"/>
-            <path d="M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z" fill="#4a72e8"/>
+            <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3Z" fill="#2952cc" />
+            <path
+              d="M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"
+              fill="#4a72e8"
+            />
           </svg>
         </div>
 
         <form className={styles.form} onSubmit={handleLogin}>
           <div className={styles.inputWrap}>
-            <input className={styles.inp} type="text" placeholder="USERNAME"
-              value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
+            <span className={styles.inputIcon}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </span>
+            <input
+              className={styles.inp}
+              type="text"
+              placeholder="USERNAME"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+            />
           </div>
 
           <div className={styles.inputWrap}>
-            <input className={styles.inp} type="password" placeholder="PASSWORD"
-              value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+            <input
+              className={styles.inp}
+              type="password"
+              placeholder="PASSWORD"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
           </div>
 
           {error && <p className={styles.errorMsg}>{error}</p>}
@@ -72,11 +97,23 @@ export default function LoginPage() {
 
         <div className={styles.forgotWrap}>
           <span className={styles.forgotIcon}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </span>
-          <a className={styles.forgotLink} href="/forgot-password">Forgot password?</a>
+          <a className={styles.forgotLink} href="/forgot-password">
+            Forgot password?
+          </a>
         </div>
       </div>
     </div>
@@ -85,7 +122,12 @@ export default function LoginPage() {
 
 function BgBlobs() {
   return (
-    <svg className={styles.bgSvg} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      className={styles.bgSvg}
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="xMidYMid slice"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       {/* Blob kiri bawah — bentuk organik besar */}
       <path
         d="M-180 900 C-100 780, 60 820, 80 720 C100 620, -20 580, 40 480 C100 380, 220 400, 200 300 C180 200, 60 180, 100 80 C120 20, 0 0, -180 0 Z"
@@ -98,11 +140,15 @@ function BgBlobs() {
       {/* Gelombang lengkung kiri bawah */}
       <path
         d="M0 900 C80 860, 160 800, 120 700 C80 600, -40 580, 20 460 C80 340, 220 360, 180 240 C140 140, 0 120, 0 0"
-        fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="60"
+        fill="none"
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth="60"
       />
       <path
         d="M-60 900 C40 850, 140 790, 100 680 C60 570, -60 550, 0 430 C60 310, 200 330, 160 210 C120 110, -20 100, -20 0"
-        fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="50"
+        fill="none"
+        stroke="rgba(255,255,255,0.05)"
+        strokeWidth="50"
       />
 
       {/* Blob kanan atas — bentuk organik besar */}
@@ -117,11 +163,15 @@ function BgBlobs() {
       {/* Gelombang lengkung kanan atas */}
       <path
         d="M1440 0 C1360 40, 1280 100, 1320 200 C1360 300, 1480 320, 1420 440 C1360 560, 1220 540, 1260 660 C1300 760, 1440 780, 1440 900"
-        fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="60"
+        fill="none"
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth="60"
       />
       <path
         d="M1500 0 C1420 50, 1320 110, 1360 220 C1400 330, 1520 350, 1460 470 C1400 590, 1260 570, 1300 690 C1340 790, 1480 810, 1480 900"
-        fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="50"
+        fill="none"
+        stroke="rgba(255,255,255,0.05)"
+        strokeWidth="50"
       />
     </svg>
   );
