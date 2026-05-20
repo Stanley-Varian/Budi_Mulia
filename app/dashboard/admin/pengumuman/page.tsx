@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./pengumuman-admin.module.css";
+import { getPengumuman, createPengumuman, updatePengumuman, deletePengumuman } from "@/lib/api/admin";
 
 // ── Tipe ────────────────────────────────────────────────────────────────────
 type Pengumuman = {
@@ -63,11 +64,12 @@ export default function PengumumanAdmin() {
   const [showLogout, setShowLogout] = useState(false);
   const [activeTab, setActiveTab]   = useState(1);
   const [filterTarget, setFilterTarget] = useState<"semua"|"siswa"|"guru"|"all">("all");
-  const [data, setData]             = useState<Pengumuman[]>(MOCK_DATA);
+  const [data, setData]             = useState<Pengumuman[]>([]);
   const [selected, setSelected]     = useState<Pengumuman | null>(null);
   const [showForm, setShowForm]     = useState(false);
   const [editItem, setEditItem]     = useState<Pengumuman | null>(null);
   const [showDelete, setShowDelete] = useState<Pengumuman | null>(null);
+  const [saveLoading, setSaveLoading] = useState(false);
 
   // Form state
   const [fJudul, setFJudul]         = useState("");
@@ -76,6 +78,19 @@ export default function PengumumanAdmin() {
   const [fTarget, setFTarget]       = useState<"semua"|"siswa"|"guru">("semua");
   const [fPenting, setFPenting]     = useState(false);
   const [fError, setFError]         = useState("");
+
+  const fetchData = async () => {
+    try {
+      const res = await getPengumuman({ limit: 50 });
+      const mapped = res.data.map((d: any) => {
+        const tagOpt = TAG_OPTIONS.find(t => t.label === d.tag) ?? TAG_OPTIONS[0];
+        return { ...d, id: d._id, tanggal: new Date(d.createdAt).toLocaleDateString("id-ID"), tagColor: tagOpt.color, tagText: tagOpt.text };
+      });
+      setData(mapped);
+    } catch (err) { console.error("Gagal fetch pengumuman:", err); }
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const filtered = filterTarget === "all" ? data : data.filter(d => d.target === filterTarget || d.target === "semua");
 
@@ -93,21 +108,31 @@ export default function PengumumanAdmin() {
     setShowForm(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!fJudul.trim() || !fIsi.trim()) { setFError("Judul dan isi wajib diisi."); return; }
-    const tagOpt = TAG_OPTIONS.find(t => t.label === fTag) ?? TAG_OPTIONS[0];
-    if (editItem) {
-      setData(data.map(d => d.id === editItem.id ? { ...d, judul:fJudul, isi:fIsi, tag:fTag, tagColor:tagOpt.color, tagText:tagOpt.text, penting:fPenting, target:fTarget } : d));
-    } else {
-      setData([{ id:Date.now(), judul:fJudul, isi:fIsi, penulis:"Administrator", tanggal:"Baru saja", tag:fTag, tagColor:tagOpt.color, tagText:tagOpt.text, penting:fPenting, target:fTarget }, ...data]);
+    setSaveLoading(true);
+    try {
+      if (editItem) {
+        await updatePengumuman(String(editItem.id), { judul: fJudul, isi: fIsi, tag: fTag, target: fTarget, penting: fPenting });
+      } else {
+        await createPengumuman({ judul: fJudul, isi: fIsi, tag: fTag, target: fTarget, penting: fPenting });
+      }
+      await fetchData();
+      setShowForm(false);
+    } catch (err: any) {
+      setFError(err.message || "Gagal menyimpan.");
+    } finally {
+      setSaveLoading(false);
     }
-    setShowForm(false);
   };
 
-  const handleDelete = (item: Pengumuman) => {
-    setData(data.filter(d => d.id !== item.id));
+  const handleDelete = async (item: Pengumuman) => {
+    try {
+      await deletePengumuman(String(item.id));
+      await fetchData();
+      if (selected?.id === item.id) setSelected(null);
+    } catch (err) { console.error("Gagal hapus:", err); }
     setShowDelete(null);
-    if (selected?.id === item.id) setSelected(null);
   };
 
   return (
