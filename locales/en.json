@@ -74,9 +74,7 @@
     "notifJadwalDesc": "Get notified when the class schedule changes",
     "bahasa": "Language",
     "bahasaDesc": "Choose your preferred display language.",
-    "siswa": "Student",
-    "guru": "Teacher",
-    "admin": "Administrator"
+    "siswa": "Student"
   },
   "logout": {
     "title": "Sign Out?",
