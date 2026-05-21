@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./manajemen-user.module.css";
+import { getUsers, createUser, updateUser, deleteUser } from "@/lib/api/admin";
 
 // ── Tipe ────────────────────────────────────────────────────────────────────
 type Role = "siswa" | "guru";
@@ -56,8 +57,10 @@ export default function ManajemenUser() {
   const [showLogout, setShowLogout]   = useState(false);
   const [activeTab, setActiveTab]     = useState<Role>("siswa");
   const [search, setSearch]           = useState("");
-  const [siswaList, setSiswaList]     = useState<User[]>(INIT_SISWA);
-  const [guruList, setGuruList]       = useState<User[]>(INIT_GURU);
+  const [siswaList, setSiswaList]     = useState<User[]>([]);
+  const [guruList, setGuruList]       = useState<User[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [showForm, setShowForm]       = useState(false);
   const [editItem, setEditItem]       = useState<User | null>(null);
   const [showDelete, setShowDelete]   = useState<User | null>(null);
@@ -71,6 +74,25 @@ export default function ManajemenUser() {
   const [fNip, setFNip]         = useState("");
   const [fMapel, setFMapel]     = useState(MAPEL_OPTIONS[0]);
   const [fError, setFError]     = useState("");
+
+  // Fetch users dari backend
+  const fetchUsers = async () => {
+    setLoadingData(true);
+    try {
+      const [resSiswa, resGuru] = await Promise.all([
+        getUsers({ role: "siswa" }),
+        getUsers({ role: "guru" }),
+      ]);
+      setSiswaList(resSiswa.data.map((u: any) => ({ ...u, id: u._id })));
+      setGuruList(resGuru.data.map((u: any) => ({ ...u, id: u._id })));
+    } catch (err) {
+      console.error("Gagal fetch users:", err);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
 
   const list = activeTab === "siswa" ? siswaList : guruList;
   const filtered = list.filter(u =>
@@ -95,30 +117,33 @@ export default function ManajemenUser() {
     setShowForm(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!fNama.trim() || !fUsername.trim()) { setFError("Nama dan username wajib diisi."); return; }
     if (activeTab === "siswa" && !fNisn.trim()) { setFError("NISN wajib diisi."); return; }
     if (activeTab === "guru" && !fNip.trim()) { setFError("NIP wajib diisi."); return; }
-
-    if (editItem) {
-      const updated: User = { ...editItem, nama:fNama, username:fUsername,
-        nisn:fNisn, kelas:fKelas, nip:fNip, mapel:fMapel };
-      if (activeTab === "siswa") setSiswaList(siswaList.map(u => u.id === editItem.id ? updated : u));
-      else setGuruList(guruList.map(u => u.id === editItem.id ? updated : u));
-    } else {
-      const newUser: User = {
-        id: Date.now(), role: activeTab, nama:fNama, username:fUsername,
-        ...(activeTab === "siswa" ? { nisn:fNisn, kelas:fKelas } : { nip:fNip, mapel:fMapel }),
-      };
-      if (activeTab === "siswa") setSiswaList([...siswaList, newUser]);
-      else setGuruList([...guruList, newUser]);
+    setSaveLoading(true);
+    try {
+      if (editItem) {
+        await updateUser(String(editItem.id), { nama: fNama, username: fUsername, nisn: fNisn, kelas: fKelas, nip: fNip, mapel: fMapel });
+      } else {
+        await createUser({ nama: fNama, username: fUsername, password: "sekolah123", role: activeTab, nisn: fNisn, kelas: fKelas, nip: fNip, mapel: fMapel });
+      }
+      await fetchUsers();
+      setShowForm(false);
+    } catch (err: any) {
+      setFError(err.message || "Gagal menyimpan.");
+    } finally {
+      setSaveLoading(false);
     }
-    setShowForm(false);
   };
 
-  const handleDelete = (u: User) => {
-    if (activeTab === "siswa") setSiswaList(siswaList.filter(s => s.id !== u.id));
-    else setGuruList(guruList.filter(g => g.id !== u.id));
+  const handleDelete = async (u: User) => {
+    try {
+      await deleteUser(String(u.id));
+      await fetchUsers();
+    } catch (err) {
+      console.error("Gagal hapus:", err);
+    }
     setShowDelete(null);
   };
 
