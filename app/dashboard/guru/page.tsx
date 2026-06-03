@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./dashboard-guru.module.css";
+import NotifBell from "@/components/NotifBell";
 
 // ── Tipe ────────────────────────────────────────────────────────────────────
 type Kelas = {
@@ -152,15 +153,18 @@ export default function DashboardGuru() {
               </button>
             ))}
           </div>
-          <div className={styles.userChip}>
-            <div className={styles.userAvatar}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-            <div className={styles.userText}>
-              <span className={styles.userName}>Bpk. Andi Saputra</span>
-              <span className={styles.userSub}>Guru Matematika</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <NotifBell />
+            <div className={styles.userChip}>
+              <div className={styles.userAvatar}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <div className={styles.userText}>
+                <span className={styles.userName}>Bpk. Andi Saputra</span>
+                <span className={styles.userSub}>Guru Matematika</span>
+              </div>
             </div>
           </div>
         </header>
