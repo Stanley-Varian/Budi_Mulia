@@ -1,6 +1,7 @@
 // lib/api/siswa.ts
 // Semua fungsi fetch ke backend untuk role siswa
 // Pemakaian: import { getJadwal, getMateriList, ... } from "@/lib/api/siswa"
+//menambahkan hosting
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
