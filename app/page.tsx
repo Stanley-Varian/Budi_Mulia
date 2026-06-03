@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
@@ -42,13 +43,14 @@ export default function LoginPage() {
       <div className={styles.card}>
         {/* Logo — ganti SVG dengan Image next/image + logo asli */}
         <div className={styles.logo}>
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3Z" fill="#2952cc" />
-            <path
-              d="M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"
-              fill="#4a72e8"
-            />
-          </svg>
+          <Image 
+            src="/logo.png" 
+            alt="Logo SMA Budi Mulia" 
+            width={80} 
+            height={80} 
+            priority // Memastikan logo cepat dimuat
+            style={{ objectFit: "contain" }} 
+          />
         </div>
 
         <form className={styles.form} onSubmit={handleLogin}>
@@ -74,7 +76,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               style={{ 
                 paddingRight: "40px", 
-                paddingLeft: "14px" // Menetralkan jarak kiri karena gembok sudah hilang
+                paddingLeft: "14px" 
               }} 
             />
 
@@ -85,8 +87,8 @@ export default function LoginPage() {
               style={{
                 position: "absolute",
                 right: "14px",
-                top: "50%", // Titik acuan tepat di tengah kolom
-                transform: "translateY(-50%)", // Kunci presisi absolut agar icon benar-benar di tengah
+                top: "50%", 
+                transform: "translateY(-50%)", 
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -100,13 +102,11 @@ export default function LoginPage() {
               title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
             >
               {showPassword ? (
-                // Logo Mata Terbuka
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
               ) : (
-                // Logo Mata Tertutup (Silang)
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
                   <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
                   <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
@@ -124,7 +124,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className={styles.forgotWrap}>
+        <div className={styles.forgotWrapper}>
           <span className={styles.forgotIcon}>
             <svg
               width="18"
