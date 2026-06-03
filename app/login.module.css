@@ -2,14 +2,13 @@
 
 .page {
   min-height: 100vh;
-  background: url('/sekolah-bg.jpeg'); 
+  background-image: url('/sekolah-bg.jpeg'); 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Poppins', sans-serif;
   position: relative;
   overflow: hidden;
 }
