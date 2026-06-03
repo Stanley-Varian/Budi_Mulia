@@ -9,6 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -63,14 +64,57 @@ export default function LoginPage() {
           </div>
 
           <div className={styles.inputWrap}>
-            <input
-              className={styles.inp}
-              type="password"
+            {/* Input Password (Gembok sudah dihapus) */}
+            <input 
+              className={styles.inp} 
+              type={showPassword ? "text" : "password"} 
               placeholder="PASSWORD"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
               autoComplete="current-password"
+              style={{ 
+                paddingRight: "40px", 
+                paddingLeft: "14px" // Menetralkan jarak kiri karena gembok sudah hilang
+              }} 
             />
+
+            {/* Tombol Show/Hide Password */}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "14px",
+                top: "50%", // Titik acuan tepat di tengah kolom
+                transform: "translateY(-50%)", // Kunci presisi absolut agar icon benar-benar di tengah
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "rgba(100,116,139,0.8)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                outline: "none"
+              }}
+              title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            >
+              {showPassword ? (
+                // Logo Mata Terbuka
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              ) : (
+                // Logo Mata Tertutup (Silang)
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                </svg>
+              )}
+            </button>
           </div>
 
           {error && <p className={styles.errorMsg}>{error}</p>}
