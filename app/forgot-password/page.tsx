@@ -3,21 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./forgot-password.module.css";
-
-function BgBlobs() {
-  return (
-    <svg className={styles.bgSvg} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <path d="M-180 900 C-100 780, 60 820, 80 720 C100 620, -20 580, 40 480 C100 380, 220 400, 200 300 C180 200, 60 180, 100 80 C120 20, 0 0, -180 0 Z" fill="rgba(255,255,255,0.07)"/>
-      <path d="M-120 900 C-40 800, 100 830, 130 730 C160 630, 30 590, 90 490 C150 390, 260 410, 240 310 C220 210, 100 190, 140 90 C160 30, 40 0, -120 0 Z" fill="rgba(255,255,255,0.05)"/>
-      <path d="M0 900 C80 860, 160 800, 120 700 C80 600, -40 580, 20 460 C80 340, 220 360, 180 240 C140 140, 0 120, 0 0" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="60"/>
-      <path d="M-60 900 C40 850, 140 790, 100 680 C60 570, -60 550, 0 430 C60 310, 200 330, 160 210 C120 110, -20 100, -20 0" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="50"/>
-      <path d="M1620 0 C1540 120, 1380 80, 1360 180 C1340 280, 1460 320, 1400 420 C1340 520, 1220 500, 1240 600 C1260 700, 1380 720, 1340 820 C1320 880, 1440 900, 1620 900 Z" fill="rgba(255,255,255,0.07)"/>
-      <path d="M1560 0 C1480 100, 1340 70, 1300 170 C1260 270, 1400 310, 1340 410 C1280 510, 1160 490, 1180 590 C1200 690, 1320 710, 1280 810 C1260 870, 1380 900, 1560 900 Z" fill="rgba(255,255,255,0.05)"/>
-      <path d="M1440 0 C1360 40, 1280 100, 1320 200 C1360 300, 1480 320, 1420 440 C1360 560, 1220 540, 1260 660 C1300 760, 1440 780, 1440 900" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="60"/>
-      <path d="M1500 0 C1420 50, 1320 110, 1360 220 C1400 330, 1520 350, 1460 470 C1400 590, 1260 570, 1300 690 C1340 790, 1480 810, 1480 900" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="50"/>
-    </svg>
-  );
-}
+import Image from "next/image";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -49,13 +35,16 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className={styles.page}>
-      <BgBlobs />
       <div className={styles.card}>
         <div className={styles.logo}>
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3Z" fill="#2952cc"/>
-            <path d="M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z" fill="#4a72e8"/>
-          </svg>
+          <Image 
+            src="/logo.png" 
+            alt="Logo SMA Budi Mulia" 
+            width={80} 
+            height={80} 
+            priority 
+            style={{ objectFit: "contain" }} 
+          />
         </div>
 
         {!sent ? (
