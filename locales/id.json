@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "jadwal": "Jadwal",
+    "pengumuman": "Pengumuman",
+    "pengaturan": "Pengaturan",
+    "keluar": "Keluar"
+  },
+  "brand": "SMA Budi Mulia",
+  "user": {
+    "kelas": "Kelas"
+  },
+  "tabs": {
+    "baru": "Baru",
+    "terbaru": "Terbaru",
+    "mingguIni": "Minggu Ini",
+    "bulanIni": "Bulan Ini"
+  },
+  "dashboard": {
+    "gabungKelas": "Gabung Kelas",
+    "gabungKelasSub": "Masukkan kode dari guru",
+    "updatedAt": "Updated"
+  },
+  "joinModal": {
+    "title": "Gabung Kelas",
+    "subtitle": "Masukkan kode dari gurumu",
+    "hint": "Kode kelas bisa kamu minta langsung ke guru pengampu.",
+    "label": "Kode Kelas",
+    "placeholder": "Contoh: MTK-2025-A",
+    "batal": "Batal",
+    "gabung": "Gabung Sekarang",
+    "memproses": "Memproses...",
+    "tutup": "Tutup"
+  },
+  "logout": {
+    "title": "Keluar dari Akun?",
+    "desc": "Kamu akan keluar dari akun",
+    "batal": "Batal",
+    "konfirmasi": "Ya, Keluar"
+  }
+}
