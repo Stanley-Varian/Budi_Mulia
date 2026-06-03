@@ -1,92 +1,41 @@
 {
   "nav": {
     "dashboard": "Dashboard",
-    "jadwal": "Schedule",
-    "pengumuman": "Announcements",
-    "pengaturan": "Settings",
-    "keluar": "Sign Out"
+    "jadwal": "Jadwal",
+    "pengumuman": "Pengumuman",
+    "pengaturan": "Pengaturan",
+    "keluar": "Keluar"
   },
   "brand": "SMA Budi Mulia",
   "user": {
-    "kelas": "Class"
+    "kelas": "Kelas"
   },
   "tabs": {
-    "baru": "New",
-    "terbaru": "Latest",
-    "mingguIni": "This Week",
-    "bulanIni": "This Month"
+    "baru": "Baru",
+    "terbaru": "Terbaru",
+    "mingguIni": "Minggu Ini",
+    "bulanIni": "Bulan Ini"
   },
   "dashboard": {
-    "gabungKelas": "Join Class",
-    "gabungKelasSub": "Enter code from your teacher",
+    "gabungKelas": "Gabung Kelas",
+    "gabungKelasSub": "Masukkan kode dari guru",
     "updatedAt": "Updated"
   },
   "joinModal": {
-    "title": "Join Class",
-    "subtitle": "Enter the code from your teacher",
-    "hint": "You can ask your teacher for the class code.",
-    "label": "Class Code",
-    "placeholder": "Example: MTK-2025-A",
-    "batal": "Cancel",
-    "gabung": "Join Now",
-    "memproses": "Processing...",
-    "tutup": "Close"
-  },
-  "jadwal": {
-    "title": "Schedule",
-    "jadwalPelajaran": "Class Schedule",
-    "ekstrakurikuler": "Extracurricular",
-    "hariIni": "Today",
-    "istirahat": "Break",
-    "jam": "Period",
-    "waktu": "Time",
-    "keterangan": "Legend:",
-    "belumAdaEkskul": "No extracurricular data available."
-  },
-  "materi": {
-    "semua": "All",
-    "pertemuan": "Session",
-    "loading": "Loading materials...",
-    "belumAda": "No materials yet."
-  },
-  "pengumuman": {
-    "title": "Announcements",
-    "penting": "Important",
-    "belumAda": "No announcements yet.",
-    "memuat": "Loading announcements..."
-  },
-  "settings": {
-    "title": "Settings",
-    "profil": "Profile",
-    "profilDesc": "This information is managed by the school admin.",
-    "namaLengkap": "Full Name",
-    "nisn": "Student ID",
-    "kelas": "Class",
-    "username": "Username",
-    "infoNote": "To update your profile data, contact the school admin.",
-    "notifikasi": "Notifications",
-    "notifikasiDesc": "Manage the notifications you want to receive.",
-    "notifPengumuman": "New Announcements",
-    "notifPengumumanDesc": "Get notified when there's a new announcement from a teacher or admin",
-    "notifMateri": "New Materials",
-    "notifMateriDesc": "Get notified when a teacher uploads new study materials",
-    "notifJadwal": "Schedule Changes",
-    "notifJadwalDesc": "Get notified when the class schedule changes",
-    "bahasa": "Language",
-    "bahasaDesc": "Choose your preferred display language.",
-    "siswa": "Student",
-    "guru": "Teacher",
-    "admin": "Administrator"
+    "title": "Gabung Kelas",
+    "subtitle": "Masukkan kode dari gurumu",
+    "hint": "Kode kelas bisa kamu minta langsung ke guru pengampu.",
+    "label": "Kode Kelas",
+    "placeholder": "Contoh: MTK-2025-A",
+    "batal": "Batal",
+    "gabung": "Gabung Sekarang",
+    "memproses": "Memproses...",
+    "tutup": "Tutup"
   },
   "logout": {
-    "title": "Sign Out?",
-    "desc": "You will be signed out of",
-    "batal": "Cancel",
-    "konfirmasi": "Yes, Sign Out"
-  },
-  "state": {
-    "memuat": "Loading...",
-    "gagal": "Failed to load data.",
-    "belumAda": "No data available."
+    "title": "Keluar dari Akun?",
+    "desc": "Kamu akan keluar dari akun",
+    "batal": "Batal",
+    "konfirmasi": "Ya, Keluar"
   }
 }
