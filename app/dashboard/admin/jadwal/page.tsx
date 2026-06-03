@@ -325,6 +325,8 @@ export default function GenerateJadwal() {
   const [activeHari, setActiveHari] = useState<Hari>("Senin");
   const [activeKelas, setActiveKelas] = useState("");
   const [durasi, setDurasi] = useState(45);
+  const [saveModal, setSaveModal] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Step 1: Kelas & Hari config
   const [kelasList, setKelasList] = useState<KelasConfig[]>([]);
@@ -1191,8 +1193,10 @@ export default function GenerateJadwal() {
                 </button>
                 <button
                   className={styles.saveBtn}
+                  disabled={saving}
                   onClick={async () => {
                     if (!hasil) return;
+                    setSaving(true);
                     try {
                       const tahunAjaran = "2024/2025";
                       const kelasAktif = kelasList.filter((k) => k.aktif);
@@ -1220,7 +1224,7 @@ export default function GenerateJadwal() {
                           });
                         }),
                       );
-                      alert("✅ Jadwal berhasil disimpan ke database!");
+                      setSaveModal({ type: "success", message: `Jadwal untuk ${kelasList.filter(k=>k.aktif).length} kelas berhasil disimpan ke database.` });
                     } catch (err) {
                       alert(
                         "❌ Gagal simpan: " +
@@ -1243,7 +1247,7 @@ export default function GenerateJadwal() {
                     <polyline points="17 21 17 13 7 13 7 21" />
                     <polyline points="7 3 7 8 15 8" />
                   </svg>
-                  Simpan Jadwal
+                  {saving ? "Menyimpan..." : "Simpan Jadwal"}
                 </button>
               </div>
             </div>
@@ -1295,6 +1299,50 @@ export default function GenerateJadwal() {
           </div>
         </div>
       )}
+      {/* Modal Save Result */}
+      {saveModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setSaveModal(null)}
+        >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div
+              className={styles.modalIcon}
+              style={{
+                background: saveModal.type === "success" ? "#f0fdf4" : "#fef2f2",
+              }}
+            >
+              {saveModal.type === "success" ? (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+              )}
+            </div>
+            <h3 className={styles.modalTitle} style={{ color: saveModal.type === "success" ? "#16a34a" : "#ef4444" }}>
+              {saveModal.type === "success" ? "Jadwal Tersimpan!" : "Gagal Menyimpan"}
+            </h3>
+            <p className={styles.modalDesc}>{saveModal.message}</p>
+            <div className={styles.modalActions}>
+              <button
+                className={styles.confirmBtn}
+                style={{ background: saveModal.type === "success" ? "#16a34a" : "#ef4444" }}
+                onClick={() => setSaveModal(null)}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
