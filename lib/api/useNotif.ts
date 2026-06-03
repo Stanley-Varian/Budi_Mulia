@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getPengumuman } from "@/lib/api/siswa";
- 
+
 export type NotifItem = {
   id: string;
   judul: string;
@@ -28,7 +28,7 @@ export function useNotif() {
   const [notifs, setNotifs] = useState<NotifItem[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
- 
+
   useEffect(() => {
     setReadIds(getReadIds());
     getPengumuman()
@@ -47,12 +47,12 @@ export function useNotif() {
       return next;
     });
   }, []);
- 
+
   const markAllRead = useCallback(() => {
     const all = new Set(notifs.map((n) => n.id));
     saveReadIds(all);
     setReadIds(all);
   }, [notifs]);
- 
+
   return { notifs, unreadCount, readIds, markRead, markAllRead, loading };
 }

@@ -27,12 +27,12 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
     return undefined;
   }, obj) as string ?? path;
 }
- 
+
 export function getLang(): Lang {
   if (typeof window === "undefined") return "id";
   return (localStorage.getItem(STORAGE_KEY) as Lang) ?? "id";
 }
- 
+
 export function setLang(lang: Lang) {
   localStorage.setItem(STORAGE_KEY, lang);
   // Dispatch event supaya semua komponen yang pakai hook ini ikut update
@@ -53,7 +53,7 @@ export function useTranslation() {
     window.addEventListener("anru_lang_change", handler);
     return () => window.removeEventListener("anru_lang_change", handler);
   }, []);
- 
+
   const t = useCallback(
     (key: TranslationKey): string => {
       return getNestedValue(
@@ -63,11 +63,11 @@ export function useTranslation() {
     },
     [lang]
   );
- 
+
   const changeLang = useCallback((newLang: Lang) => {
     setLangState(newLang);
     setLang(newLang);
   }, []);
- 
+
   return { t, lang, changeLang };
 }
