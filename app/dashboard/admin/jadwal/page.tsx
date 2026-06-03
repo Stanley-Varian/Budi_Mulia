@@ -1221,10 +1221,10 @@ export default function GenerateJadwal() {
                         }),
                       );
                       alert("✅ Jadwal berhasil disimpan ke database!");
-                    } catch (err: any) {
+                    } catch (err) {
                       alert(
                         "❌ Gagal simpan: " +
-                          (err.message || "Terjadi kesalahan"),
+                          (err instanceof Error ? err.message : "Terjadi kesalahan"),
                       );
                     }
                   }}

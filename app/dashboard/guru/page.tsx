@@ -1,43 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./dashboard-guru.module.css";
 import NotifBell from "@/components/NotifBell";
 
+const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+
+// ── Helper auth ──────────────────────────────────────────────────────────────
+function authHeader(): HeadersInit {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // ── Tipe ────────────────────────────────────────────────────────────────────
 type Kelas = {
-  id: number;
+  _id: string;
   mapel: string;
-  kelas: string;
-  jumlahSiswa: number;
+  nama: string;       // nama kelas, contoh "10 A"
+  kodeKelas: string;
+  namaGuru: string;
+  anggota: string[];
+  createdAt: string;
   updatedAt: string;
-  warna: string;
-  icon: string;
 };
 
-// ── Mock data — ganti dengan fetch GET /api/guru/kelas ───────────────────────
-const INIT_KELAS: Kelas[] = [
-  { id:1, mapel:"Matematika", kelas:"10 A", jumlahSiswa:32, updatedAt:"Hari ini",    warna:"#dbeafe", icon:"math"  },
-  { id:2, mapel:"Matematika", kelas:"10 B", jumlahSiswa:30, updatedAt:"Hari ini",    warna:"#dbeafe", icon:"math"  },
-  { id:3, mapel:"Matematika", kelas:"11 A", jumlahSiswa:28, updatedAt:"Kemarin",     warna:"#dbeafe", icon:"math"  },
-  { id:4, mapel:"Matematika", kelas:"11 B", jumlahSiswa:31, updatedAt:"Kemarin",     warna:"#dbeafe", icon:"math"  },
-  { id:5, mapel:"Matematika", kelas:"12 A", jumlahSiswa:29, updatedAt:"3 hari lalu", warna:"#dbeafe", icon:"math"  },
-  { id:6, mapel:"Matematika", kelas:"12 B", jumlahSiswa:27, updatedAt:"3 hari lalu", warna:"#dbeafe", icon:"math"  },
-];
+// Warna & icon berdasarkan mapel
+const MAPEL_META: Record<string, { warna: string; icon: string }> = {
+  "Matematika":       { warna: "#dbeafe", icon: "math"  },
+  "Bahasa Indonesia": { warna: "#fce7f3", icon: "book"  },
+  "Bahasa Inggris":   { warna: "#d1fae5", icon: "book"  },
+  "Fisika":           { warna: "#fef9c3", icon: "atom"  },
+  "Kimia":            { warna: "#ede9fe", icon: "flask" },
+  "Biologi":          { warna: "#ffedd5", icon: "leaf"  },
+  "Sejarah":          { warna: "#f0fdf4", icon: "clock" },
+  "Ekonomi":          { warna: "#fdf2f8", icon: "chart" },
+  "PJOK":             { warna: "#dcfce7", icon: "sport" },
+  "Agama":            { warna: "#fff7ed", icon: "book"  },
+};
 
-const MAPEL_OPTIONS = [
-  { label:"Matematika",       warna:"#dbeafe", icon:"math"  },
-  { label:"Bahasa Indonesia", warna:"#fce7f3", icon:"book"  },
-  { label:"Bahasa Inggris",   warna:"#d1fae5", icon:"book"  },
-  { label:"Fisika",           warna:"#fef9c3", icon:"atom"  },
-  { label:"Kimia",            warna:"#ede9fe", icon:"flask" },
-  { label:"Biologi",          warna:"#ffedd5", icon:"leaf"  },
-  { label:"Sejarah",          warna:"#f0fdf4", icon:"clock" },
-  { label:"Ekonomi",          warna:"#fdf2f8", icon:"chart" },
-  { label:"PJOK",             warna:"#dcfce7", icon:"sport" },
-  { label:"Agama",            warna:"#fff7ed", icon:"book"  },
-];
+function getMapelMeta(mapel: string) {
+  return MAPEL_META[mapel] ?? { warna: "#f1f5f9", icon: "book" };
+}
+
+const MAPEL_OPTIONS = Object.keys(MAPEL_META);
 
 const KELAS_OPTIONS = [
   "10 A","10 B","10 C","10 D",
@@ -72,42 +78,67 @@ export default function DashboardGuru() {
   const [expanded, setExpanded]     = useState(false);
   const [showLogout, setShowLogout] = useState(false);
   const [activeTab, setActiveTab]   = useState(1);
-  const [kelasList, setKelasList]   = useState<Kelas[]>(INIT_KELAS);
+
+  // Data kelas dari backend
+  const [kelasList, setKelasList]   = useState<Kelas[]>([]);
+  const [loading, setLoading]       = useState(true);
 
   // Form tambah kelas
   const [showForm, setShowForm]     = useState(false);
-  const [fMapel, setFMapel]         = useState(MAPEL_OPTIONS[0].label);
+  const [fMapel, setFMapel]         = useState(MAPEL_OPTIONS[0]);
   const [fKelas, setFKelas]         = useState(KELAS_OPTIONS[0]);
-  const [fJumlah, setFJumlah]       = useState("");
+  const [fKode, setFKode]           = useState("");
   const [fError, setFError]         = useState("");
+  const [saving, setSaving]         = useState(false);
 
-  const handleTambahKelas = () => {
-    if (!fJumlah || isNaN(Number(fJumlah)) || Number(fJumlah) <= 0) {
-      setFError("Jumlah siswa harus diisi dengan angka yang valid.");
-      return;
-    }
-    // Cek duplikat
-    const duplikat = kelasList.find(k => k.mapel === fMapel && k.kelas === fKelas);
-    if (duplikat) {
-      setFError(`${fMapel} kelas ${fKelas} sudah ada.`);
-      return;
-    }
-    const opt = MAPEL_OPTIONS.find(m => m.label === fMapel)!;
-    const newKelas: Kelas = {
-      id: Date.now(),
-      mapel: fMapel,
-      kelas: fKelas,
-      jumlahSiswa: Number(fJumlah),
-      updatedAt: "Baru saja",
-      warna: opt.warna,
-      icon: opt.icon,
+  // ── Fetch semua kelas dari backend ────────────────────────────────────────
+  useEffect(() => {
+    const fetchKelas = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${BACKEND}/api/guru/kelas`, {
+          headers: authHeader(),
+        });
+        const json = await res.json();
+        if (json.success) setKelasList(json.data);
+      } catch {
+        // silent fail — grid tetap kosong
+      } finally {
+        setLoading(false);
+      }
     };
-    setKelasList([...kelasList, newKelas]);
-    setFMapel(MAPEL_OPTIONS[0].label);
-    setFKelas(KELAS_OPTIONS[0]);
-    setFJumlah("");
+    fetchKelas();
+  }, []);
+
+  // ── Tambah kelas baru ─────────────────────────────────────────────────────
+  const handleTambahKelas = async () => {
+    if (!fKode.trim()) {
+      setFError("Kode kelas wajib diisi.");
+      return;
+    }
+    setSaving(true);
     setFError("");
-    setShowForm(false);
+    try {
+      const res = await fetch(`${BACKEND}/api/guru/kelas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ mapel: fMapel, nama: fKelas, kodeKelas: fKode.trim() }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setFError(json.message || "Gagal membuat kelas.");
+        return;
+      }
+      setKelasList((prev) => [json.data, ...prev]);
+      setShowForm(false);
+      setFKode("");
+      setFMapel(MAPEL_OPTIONS[0]);
+      setFKelas(KELAS_OPTIONS[0]);
+    } catch {
+      setFError("Gagal terhubung ke server.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -171,45 +202,56 @@ export default function DashboardGuru() {
 
         {/* Grid */}
         <div className={styles.content}>
-          <div className={styles.grid}>
-            {kelasList.map((kelas) => (
-              <a key={kelas.id} href={`/dashboard/guru/materi/${kelas.id}`} className={styles.card}>
-                <div className={styles.cardTop} style={{ background: kelas.warna }}>
-                  <div className={styles.cardIconWrap}>
-                    <MapelIcon icon={kelas.icon} />
-                  </div>
-                  <div className={styles.cardActions}>
-                    <button className={styles.cardBtn} title="Upload Materi" onClick={(e) => { e.preventDefault(); router.push(`/dashboard/guru/materi/${kelas.id}`); }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                      </svg>
-                    </button>
-                    <button className={styles.cardBtn} title="Info" onClick={(e) => e.preventDefault()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.cardBottom}>
-                  <div className={styles.cardInfo}>
-                    <span className={styles.cardMapel}>{kelas.mapel}</span>
-                    <span className={styles.cardKelas}>Kelas {kelas.kelas}</span>
-                  </div>
-                  <div className={styles.cardMeta}>
-                    <span className={styles.cardSiswa}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                      {kelas.jumlahSiswa} siswa
-                    </span>
-                    <span className={styles.cardUpdated}>Updated {kelas.updatedAt}</span>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
+          {loading ? (
+            <p style={{ color: "#64748b", padding: "2rem", textAlign: "center" }}>Memuat kelas...</p>
+          ) : kelasList.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8" }}>
+              <p style={{ fontSize: 15, marginBottom: 12 }}>Belum ada kelas. Tambah kelas baru!</p>
+            </div>
+          ) : (
+            <div className={styles.grid}>
+              {kelasList.map((kelas) => {
+                const meta = getMapelMeta(kelas.mapel);
+                return (
+                  <a key={kelas._id} href={`/dashboard/guru/materi/${kelas._id}`} className={styles.card}>
+                    <div className={styles.cardTop} style={{ background: meta.warna }}>
+                      <div className={styles.cardIconWrap}>
+                        <MapelIcon icon={meta.icon} />
+                      </div>
+                      <div className={styles.cardActions}>
+                        <button className={styles.cardBtn} title="Upload Materi" onClick={(e) => { e.preventDefault(); router.push(`/dashboard/guru/materi/${kelas._id}`); }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                          </svg>
+                        </button>
+                        <button className={styles.cardBtn} title="Info" onClick={(e) => e.preventDefault()}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className={styles.cardBottom}>
+                      <div className={styles.cardInfo}>
+                        <span className={styles.cardMapel}>{kelas.mapel}</span>
+                        <span className={styles.cardKelas}>Kelas {kelas.nama}</span>
+                      </div>
+                      <div className={styles.cardMeta}>
+                        <span className={styles.cardSiswa}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                          </svg>
+                          {kelas.anggota.length} siswa
+                        </span>
+                        <span className={styles.cardUpdated}>Kode: {kelas.kodeKelas}</span>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* FAB Tambah Kelas */}
@@ -236,7 +278,7 @@ export default function DashboardGuru() {
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Mata Pelajaran</label>
               <select className={styles.formSelect} value={fMapel} onChange={(e) => setFMapel(e.target.value)}>
-                {MAPEL_OPTIONS.map(m => <option key={m.label}>{m.label}</option>)}
+                {MAPEL_OPTIONS.map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
 
@@ -248,26 +290,29 @@ export default function DashboardGuru() {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Jumlah Siswa</label>
+              <label className={styles.formLabel}>Kode Kelas</label>
               <input
                 className={styles.formInput}
-                type="number"
-                placeholder="contoh: 32"
-                value={fJumlah}
-                onChange={(e) => setFJumlah(e.target.value)}
-                min="1"
+                type="text"
+                placeholder="contoh: MTK10A"
+                value={fKode}
+                onChange={(e) => setFKode(e.target.value)}
               />
             </div>
 
             {fError && <p className={styles.formError}>{fError}</p>}
 
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => { setShowForm(false); setFError(""); }}>Batal</button>
-              <button className={styles.submitBtn} onClick={handleTambahKelas}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Tambah Kelas
+              <button className={styles.cancelBtn} onClick={() => { setShowForm(false); setFError(""); }} disabled={saving}>Batal</button>
+              <button className={styles.submitBtn} onClick={handleTambahKelas} disabled={saving}>
+                {saving ? "Menyimpan..." : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Tambah Kelas
+                  </>
+                )}
               </button>
             </div>
           </div>
