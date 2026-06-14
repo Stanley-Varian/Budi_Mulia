@@ -8,7 +8,16 @@ import { useTranslation } from "@/lib/api/UseTranslation";
 import NotifBell from "@/components/NotifBell";
 import { useNotif } from "@/lib/api/useNotif";
 
-type Materi = { id: string; judul: string; deskripsi: string; tipe: "pdf"|"video"|"doc"|"link"; ukuran?: string; tanggal: string; pertemuan: number; };
+type Materi = {
+  id: string;
+  judul: string;
+  deskripsi: string;
+  tipe: "pdf" | "video" | "doc" | "link";
+  url: string;
+  ukuran?: string;
+  tanggal: string;
+  pertemuan: number;
+};
 type DataMapel = { mapel: string; guru: string; kelas: string; list: Materi[]; };
 
 function NavNotifIcon({ unreadCount }: { unreadCount: number }) {
@@ -32,8 +41,8 @@ function NavNotifIcon({ unreadCount }: { unreadCount: number }) {
   );
 }
 
-const NAV_KEYS = ["dashboard","jadwal","pengumuman","pengaturan"] as const;
-const NAV_HREFS = ["/dashboard/siswa","/dashboard/siswa/jadwal","/dashboard/siswa/pengumuman","/dashboard/siswa/settings"];
+const NAV_KEYS = ["dashboard", "jadwal", "pengumuman", "pengaturan"] as const;
+const NAV_HREFS = ["/dashboard/siswa", "/dashboard/siswa/jadwal", "/dashboard/siswa/pengumuman", "/dashboard/siswa/settings"];
 
 export default function MateriSiswa({ params }: { params: { id: string } }) {
   const { t } = useTranslation();
@@ -143,6 +152,54 @@ export default function MateriSiswa({ params }: { params: { id: string } }) {
                           <span>{t("materi.pertemuan")} {item.pertemuan}</span>
                           {item.ukuran && <span>{item.ukuran}</span>}
                           <span>{new Date(item.tanggal).toLocaleDateString("id-ID")}</span>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                          {item.tipe === "link" ? (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 4,
+                                fontSize: 12, fontWeight: 500, color: "#4f46e5",
+                                background: "#eef2ff", borderRadius: 6,
+                                padding: "5px 10px", textDecoration: "none",
+                              }}>
+                            
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                              Buka Link
+                            </a>
+                          ) : (
+                            <>
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 4,
+                                  fontSize: 12, fontWeight: 500, color: "#4f46e5",
+                                  background: "#eef2ff", borderRadius: 6,
+                                  padding: "5px 10px", textDecoration: "none",
+                                }}
+                              >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Lihat
+                              </a>
+                              <a
+                                href={item.url}
+                                download
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 4,
+                                  fontSize: 12, fontWeight: 500, color: "#059669",
+                                  background: "#ecfdf5", borderRadius: 6,
+                                  padding: "5px 10px", textDecoration: "none",
+                                }}
+                              >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download
+                              </a>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
