@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./settings.module.css";
 import { getProfil, getUser } from "@/lib/api/siswa";
@@ -96,15 +96,28 @@ export default function SettingsSiswa() {
           ))}
           <button className={`${styles.navItem} ${styles.navLogout}`} onClick={() => setShowLogout(true)} title={!expanded ? t("nav.keluar") : undefined} style={{ marginTop: "auto" }}>
             <span className={styles.navIcon}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </span>
             {expanded && <span className={styles.navLabel}>{t("nav.keluar")}</span>}
           </button>
         </nav>
       </aside>
-      {expanded && <div className={styles.overlay} onClick={() => setExpanded(false)} />}
+      {expanded && (
+        <div className={styles.overlay} onClick={() => setExpanded(false)} />
+      )}
 
       <div className={`${styles.main} ${expanded ? styles.mainShifted : ""}`}>
         <header className={styles.topbar}>
@@ -134,8 +147,18 @@ export default function SettingsSiswa() {
               <div className={styles.profileCard}>
                 <div className={styles.avatarWrap}>
                   <div className={styles.avatar}>
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    <svg
+                      width="36"
+                      height="36"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
                     </svg>
                   </div>
                   <div className={styles.avatarInfo}>
@@ -162,8 +185,19 @@ export default function SettingsSiswa() {
                 ))}
               </div>
               <div className={styles.infoNote}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
                 {t("settings.infoNote")}
               </div>
@@ -185,7 +219,29 @@ export default function SettingsSiswa() {
                     </div>
                     <Toggle value={val} onChange={set} />
                   </div>
-                ))}
+                  <Toggle
+                    value={notifPengumuman}
+                    onChange={setNotifPengumuman}
+                  />
+                </div>
+                <div className={styles.toggleRow}>
+                  <div className={styles.toggleInfo}>
+                    <span className={styles.toggleLabel}>Materi Baru</span>
+                    <span className={styles.toggleDesc}>
+                      Notifikasi saat guru mengupload materi baru
+                    </span>
+                  </div>
+                  <Toggle value={notifMateri} onChange={setNotifMateri} />
+                </div>
+                <div className={styles.toggleRow}>
+                  <div className={styles.toggleInfo}>
+                    <span className={styles.toggleLabel}>Perubahan Jadwal</span>
+                    <span className={styles.toggleDesc}>
+                      Notifikasi saat ada perubahan jadwal pelajaran
+                    </span>
+                  </div>
+                  <Toggle value={notifJadwal} onChange={setNotifJadwal} />
+                </div>
               </div>
             </div>
 
@@ -209,17 +265,30 @@ export default function SettingsSiswa() {
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
       {showLogout && (
-        <div className={styles.modalOverlay} onClick={() => setShowLogout(false)}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowLogout(false)}
+        >
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalIcon}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ef4444"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </div>
             <h3 className={styles.modalTitle}>{t("logout.title")}</h3>
@@ -237,7 +306,12 @@ export default function SettingsSiswa() {
 
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button className={`${styles.toggle} ${value ? styles.toggleOn : ""}`} onClick={() => onChange(!value)} role="switch" aria-checked={value}>
+    <button
+      className={`${styles.toggle} ${value ? styles.toggleOn : ""}`}
+      onClick={() => onChange(!value)}
+      role="switch"
+      aria-checked={value}
+    >
       <span className={styles.toggleThumb} />
     </button>
   );

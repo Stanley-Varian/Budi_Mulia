@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./jadwal-siswa.module.css";
 import { getJadwal, getEkskul, getUser } from "@/lib/api/siswa";
@@ -25,6 +25,8 @@ const TC: Record<string, string> = {
   PJOK: "#166534", Agama: "#9a3412", PKN: "#0369a1", BK: "#475569", Doa: "#94a3b8",
 };
 
+// ── Mock jadwal pelajaran (Senin–Jumat) ──────────────────────────────────────
+// Ganti dengan fetch GET /api/jadwal?kelas=10B
 const HARI = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
 const HARI_EN: Record<string, string> = {
   Senin: "Monday", Selasa: "Tuesday", Rabu: "Wednesday", Kamis: "Thursday", Jumat: "Friday",
@@ -79,8 +81,73 @@ function convertJadwal(
     jadwal[hari] = arr;
   }
 
-  return { jadwal, jamNo, jamWaktu };
-}
+// ── Mock ekstrakurikuler ─────────────────────────────────────────────────────
+// Ganti dengan fetch GET /api/ekskul?siswaId=xxx
+type Ekskul = {
+  nama: string;
+  pembina: string;
+  hari: string;
+  jam: string;
+  tempat: string;
+  warna: string;
+  warnaText: string;
+};
+const EKSKUL: Ekskul[] = [
+  {
+    nama: "Paskibra",
+    pembina: "Bpk. Doni",
+    hari: "Senin",
+    jam: "15.00 – 17.00",
+    tempat: "Lapangan Upacara",
+    warna: "#dbeafe",
+    warnaText: "#1e40af",
+  },
+  {
+    nama: "Basket",
+    pembina: "Bpk. Reza",
+    hari: "Selasa",
+    jam: "15.00 – 17.00",
+    tempat: "Lapangan Basket",
+    warna: "#dcfce7",
+    warnaText: "#166534",
+  },
+  {
+    nama: "PMR",
+    pembina: "Ibu Ratna",
+    hari: "Rabu",
+    jam: "14.30 – 16.30",
+    tempat: "Ruang PMR",
+    warna: "#fce7f3",
+    warnaText: "#9d174d",
+  },
+  {
+    nama: "Rohis",
+    pembina: "Bpk. Fauzi",
+    hari: "Kamis",
+    jam: "14.00 – 15.30",
+    tempat: "Mushola",
+    warna: "#fff7ed",
+    warnaText: "#9a3412",
+  },
+  {
+    nama: "English Club",
+    pembina: "Ibu Rina",
+    hari: "Jumat",
+    jam: "14.30 – 16.00",
+    tempat: "Ruang 12",
+    warna: "#d1fae5",
+    warnaText: "#065f46",
+  },
+  {
+    nama: "KIR",
+    pembina: "Ibu Wulan",
+    hari: "Jumat",
+    jam: "14.30 – 16.30",
+    tempat: "Lab IPA",
+    warna: "#ede9fe",
+    warnaText: "#6d28d9",
+  },
+];
 
 function NavNotifIcon({ unreadCount }: { unreadCount: number }) {
   return (
@@ -115,7 +182,9 @@ export default function JadwalSiswa() {
 
   const [expanded, setExpanded] = useState(false);
   const [mode, setMode] = useState<"jadwal" | "ekskul">("jadwal");
-  const [activeHari, setActiveHari] = useState(HARI.includes(hariIni) ? hariIni : "Senin");
+  const [activeHari, setActiveHari] = useState(
+    HARI.includes(hariIni) ? hariIni : "Senin",
+  );
   const [showLogout, setShowLogout] = useState(false);
   const [jadwalData, setJadwalData] = useState<JadwalData | null>(null);
   const [jamWaktu, setJamWaktu] = useState<string[]>([]);
@@ -181,7 +250,9 @@ export default function JadwalSiswa() {
           </button>
         </nav>
       </aside>
-      {expanded && <div className={styles.overlay} onClick={() => setExpanded(false)} />}
+      {expanded && (
+        <div className={styles.overlay} onClick={() => setExpanded(false)} />
+      )}
 
       <div className={`${styles.main} ${expanded ? styles.mainShifted : ""}`}>
         <header className={styles.topbar}>
@@ -249,7 +320,12 @@ export default function JadwalSiswa() {
                     {jamNo.map((label, ri) => {
                       const isIst = label === ISTIRAHAT_LABEL;
                       return (
-                        <tr key={ri} className={isIst ? styles.trIstirahat : styles.trNormal}>
+                        <tr
+                          key={ri}
+                          className={
+                            isIst ? styles.trIstirahat : styles.trNormal
+                          }
+                        >
                           <td className={styles.tdJam}>{isIst ? "" : label}</td>
                           <td className={styles.tdWaktu}>{isIst ? t("jadwal.istirahat") : jamWaktu[ri]}</td>
                           {HARI.map((h) => {
@@ -258,10 +334,25 @@ export default function JadwalSiswa() {
                             if (!cell || cell === "istirahat") return <td key={h} className={styles.tdEmpty}>—</td>;
                             const p = cell as { mapel: string; guru: string };
                             return (
-                              <td key={h} className={`${styles.tdMapel} ${h === activeHari ? styles.tdActive : ""}`}>
-                                <div className={styles.mapelChip} style={{ background: BG[p.mapel] || "#f1f5f9", color: TC[p.mapel] || "#374151" }}>
-                                  <span className={styles.mapelNama}>{p.mapel}</span>
-                                  {p.guru && p.mapel !== "Doa" && <span className={styles.mapelGuru}>{p.guru}</span>}
+                              <td
+                                key={h}
+                                className={`${styles.tdMapel} ${h === activeHari ? styles.tdActive : ""}`}
+                              >
+                                <div
+                                  className={styles.mapelChip}
+                                  style={{
+                                    background: BG[p.mapel] || "#f8fafc",
+                                    color: TC[p.mapel] || "#374151",
+                                  }}
+                                >
+                                  <span className={styles.mapelNama}>
+                                    {p.mapel}
+                                  </span>
+                                  {p.guru && p.mapel !== "Doa" && (
+                                    <span className={styles.mapelGuru}>
+                                      {p.guru}
+                                    </span>
+                                  )}
                                 </div>
                               </td>
                             );
@@ -278,7 +369,13 @@ export default function JadwalSiswa() {
                 <div className={styles.legendList}>
                   {Object.entries(BG).filter(([m]) => !["Doa","MAT. W","Sejarah W","KIMIA","Bahasa Indonesia","Bahasa Inggris"].includes(m)).map(([m, c]) => (
                     <div key={m} className={styles.legendItem}>
-                      <div className={styles.legendDot} style={{ background: c, border: `1.5px solid ${TC[m] || "#ccc"}` }} />
+                      <div
+                        className={styles.legendDot}
+                        style={{
+                          background: c,
+                          border: `1.5px solid ${TC[m] || "#ccc"}`,
+                        }}
+                      />
                       <span>{m}</span>
                     </div>
                   ))}
@@ -312,20 +409,101 @@ export default function JadwalSiswa() {
                         </div>
                       ))}
                     </div>
-                  );
-                })}
-              </div>
-            )
+                    {list.map((e, i) => (
+                      <div
+                        key={i}
+                        className={styles.ekskulCard}
+                        style={{
+                          borderLeft: `4px solid ${e.warnaText}`,
+                          background: e.warna,
+                        }}
+                      >
+                        <div
+                          className={styles.ekskulNama}
+                          style={{ color: e.warnaText }}
+                        >
+                          {e.nama}
+                        </div>
+                        <div className={styles.ekskulDetail}>
+                          <span>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            {e.jam}
+                          </span>
+                          <span>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            {e.tempat}
+                          </span>
+                          <span>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            {e.pembina}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
 
       {showLogout && (
-        <div className={styles.modalOverlay} onClick={() => setShowLogout(false)}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowLogout(false)}
+        >
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalIcon}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ef4444"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </div>
             <h3 className={styles.modalTitle}>{t("logout.title")}</h3>
