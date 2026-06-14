@@ -39,3 +39,41 @@ export const getPengumumanDetail = async (id: string) => {
   const data = await fetchWithAuth(`/api/guru/pengumuman/${id}`);
   return data.data;
 };
+
+// POST /api/guru/pengumuman
+export const createPengumuman = async (payload: {
+  judul: string;
+  isi: string;
+  tag: string;
+  target: "semua" | "siswa" | "guru";
+  penting: boolean;
+}) => {
+  const data = await fetchWithAuth("/api/guru/pengumuman", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return data.data;
+};
+
+// PUT /api/guru/pengumuman/:id
+export const updatePengumuman = async (
+  id: string,
+  payload: {
+    judul?: string;
+    isi?: string;
+    tag?: string;
+    target?: "semua" | "siswa" | "guru";
+    penting?: boolean;
+  }
+) => {
+  const data = await fetchWithAuth(`/api/guru/pengumuman/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+  return data.data;
+};
+
+// DELETE /api/guru/pengumuman/:id
+export const deletePengumuman = async (id: string) => {
+  await fetchWithAuth(`/api/guru/pengumuman/${id}`, { method: "DELETE" });
+};

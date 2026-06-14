@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./materi-guru.module.css";
 
+const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+
+// ── Helper auth ──────────────────────────────────────────────────────────────
+function authHeader(): HeadersInit {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // ── Tipe ────────────────────────────────────────────────────────────────────
 type Materi = {
-  id: number;
+  id: string;
   judul: string;
   deskripsi: string;
   tipe: "pdf" | "video" | "doc" | "link";
@@ -15,27 +23,11 @@ type Materi = {
   pertemuan: number;
 };
 
-// ── Mock data — ganti dengan fetch GET /api/guru/materi?kelasId=[id] ─────────
-const MATERI_DATA: Record<string, { mapel: string; kelas: string; warna: string; list: Materi[] }> = {
-  "1": { mapel:"Matematika", kelas:"10 A", warna:"#dbeafe", list:[
-    { id:1, judul:"Pengantar Sistem Persamaan Linear", deskripsi:"Materi pembuka SPLDV dan SPLTV", tipe:"pdf", ukuran:"2.4 MB", tanggal:"Hari ini", pertemuan:1 },
-    { id:2, judul:"Video Penjelasan SPLDV", deskripsi:"Metode substitusi dan eliminasi", tipe:"video", ukuran:"45 menit", tanggal:"Hari ini", pertemuan:1 },
-    { id:3, judul:"Latihan Soal Bab 3", deskripsi:"Kumpulan soal latihan pertemuan ke-2", tipe:"doc", ukuran:"1.1 MB", tanggal:"Kemarin", pertemuan:2 },
-    { id:4, judul:"Rumus-Rumus Penting", deskripsi:"Rangkuman rumus untuk ujian", tipe:"pdf", ukuran:"800 KB", tanggal:"3 hari lalu", pertemuan:2 },
-  ]},
-  "2": { mapel:"Matematika", kelas:"10 B", warna:"#dbeafe", list:[
-    { id:1, judul:"Pengantar Sistem Persamaan Linear", deskripsi:"Materi pembuka SPLDV dan SPLTV", tipe:"pdf", ukuran:"2.4 MB", tanggal:"Hari ini", pertemuan:1 },
-    { id:2, judul:"Latihan Soal Bab 3", deskripsi:"Kumpulan soal latihan pertemuan ke-2", tipe:"doc", ukuran:"1.1 MB", tanggal:"Kemarin", pertemuan:2 },
-  ]},
-  "3": { mapel:"Matematika", kelas:"11 A", warna:"#dbeafe", list:[
-    { id:1, judul:"Fungsi Komposisi", deskripsi:"Pengertian dan sifat-sifat fungsi komposisi", tipe:"pdf", ukuran:"3.1 MB", tanggal:"Kemarin", pertemuan:1 },
-  ]},
-  "4": { mapel:"Matematika", kelas:"11 B", warna:"#dbeafe", list:[] },
-  "5": { mapel:"Matematika", kelas:"12 A", warna:"#dbeafe", list:[
-    { id:1, judul:"Limit Fungsi", deskripsi:"Konsep limit dan cara menghitung limit", tipe:"pdf", ukuran:"2.9 MB", tanggal:"3 hari lalu", pertemuan:1 },
-    { id:2, judul:"Link Referensi Limit", deskripsi:"Video Khan Academy tentang limit", tipe:"link", tanggal:"4 hari lalu", pertemuan:1 },
-  ]},
-  "6": { mapel:"Matematika", kelas:"12 B", warna:"#dbeafe", list:[] },
+type KelasData = {
+  _id: string;
+  nama: string;
+  mapel: string;
+  kodeKelas: string;
 };
 
 const TIPE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
@@ -62,14 +54,40 @@ function TipeIcon({ tipe }: { tipe: string }) {
   }
 }
 
+function formatTanggal(isoString: string): string {
+  const now = new Date();
+  const date = new Date(isoString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Hari ini";
+  if (diffDays === 1) return "Kemarin";
+  if (diffDays < 7) return `${diffDays} hari lalu`;
+  return date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+}
+
+type MateriApi = {
+  _id: string;
+  judul: string;
+  deskripsi?: string;
+  tipe?: "pdf" | "video" | "doc" | "link";
+  ukuran?: string;
+  createdAt: string;
+  pertemuan: number;
+};
+
 export default function MateriGuru({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [expanded, setExpanded]       = useState(false);
-  const [showLogout, setShowLogout]   = useState(false);
-  const [filterPertemuan, setFilter]  = useState<number | "semua">("semua");
-  const [showForm, setShowForm]       = useState(false);
-  const [showDelete, setShowDelete]   = useState<Materi | null>(null);
-  const [editItem, setEditItem]       = useState<Materi | null>(null);
+  const [expanded, setExpanded]     = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
+  const [filterPertemuan, setFilter] = useState<number | "semua">("semua");
+  const [showForm, setShowForm]     = useState(false);
+  const [showDelete, setShowDelete] = useState<Materi | null>(null);
+  const [editItem, setEditItem]     = useState<Materi | null>(null);
+
+  const [kelasData, setKelasData]   = useState<KelasData | null>(null);
+  const [materiList, setMateriList] = useState<Materi[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [loadError, setLoadError]   = useState("");
 
   // Form state
   const [fJudul, setFJudul]         = useState("");
@@ -79,15 +97,64 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
   const [fFile, setFFile]           = useState<File | null>(null);
   const [fLink, setFLink]           = useState("");
   const [fError, setFError]         = useState("");
+  const [saving, setSaving]         = useState(false);
 
-  const data = MATERI_DATA[params.id];
-  const [materiList, setMateriList] = useState<Materi[]>(data?.list ?? []);
+  // ── Load kelas + materi ───────────────────────────────────────────────────
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const headers = authHeader();
 
-  if (!data) {
+        // Ambil detail kelas
+        const kelasRes = await fetch(`${BACKEND}/api/guru/kelas/${params.id}`, { headers });
+        const kelasJson = await kelasRes.json();
+        if (!kelasJson.success) {
+          setLoadError("Kelas tidak ditemukan.");
+          setLoading(false);
+          return;
+        }
+        setKelasData(kelasJson.data);
+
+        // Ambil daftar materi
+        const materiRes = await fetch(`${BACKEND}/api/guru/materi/${params.id}`, { headers });
+        const materiJson = await materiRes.json();
+        if (materiJson.success) {
+          const mapped: Materi[] = materiJson.data.map((m: MateriApi) => ({
+            id: m._id,
+            judul: m.judul,
+            deskripsi: m.deskripsi ?? "",
+            tipe: m.tipe ?? "doc",
+            ukuran: m.ukuran,
+            tanggal: formatTanggal(m.createdAt),
+            pertemuan: m.pertemuan,
+          }));
+          setMateriList(mapped);
+        }
+      } catch {
+        setLoadError("Gagal memuat data. Periksa koneksi.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", fontFamily:"Poppins,sans-serif" }}>
+        <p style={{ color:"#64748b" }}>Memuat data...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !kelasData) {
     return (
       <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", fontFamily:"Poppins,sans-serif" }}>
         <div style={{ textAlign:"center" }}>
-          <p style={{ fontSize:16, color:"#64748b" }}>Kelas tidak ditemukan.</p>
+          <p style={{ fontSize:16, color:"#64748b" }}>{loadError || "Kelas tidak ditemukan."}</p>
           <button onClick={() => router.push("/dashboard/guru")} style={{ marginTop:16, padding:"10px 20px", background:"#2952cc", color:"white", border:"none", borderRadius:8, cursor:"pointer" }}>
             Kembali ke Dashboard
           </button>
@@ -96,7 +163,7 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
     );
   }
 
-  const pertemuanList = [...new Set(materiList.map(m => m.pertemuan))].sort((a,b) => a-b);
+  const pertemuanList = [...new Set(materiList.map(m => m.pertemuan))].sort((a, b) => a - b);
   const filtered = filterPertemuan === "semua" ? materiList : materiList.filter(m => m.pertemuan === filterPertemuan);
 
   const openForm = (item?: Materi) => {
@@ -114,31 +181,86 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
     setShowForm(true);
   };
 
-  const handleSave = () => {
+  // ── Save ──────────────────────────────────────────────────────────────────
+  const handleSave = async () => {
     if (!fJudul.trim()) { setFError("Judul wajib diisi."); return; }
     if (fTipe === "link" && !fLink.trim()) { setFError("URL link wajib diisi."); return; }
     if (fTipe !== "link" && !editItem && !fFile) { setFError("File wajib dipilih."); return; }
 
-    if (editItem) {
-      setMateriList(materiList.map(m => m.id === editItem.id ? {
-        ...m, judul:fJudul, deskripsi:fDeskripsi,
-        tipe:fTipe, pertemuan:Number(fPertemuan),
-      } : m));
-    } else {
-      const newMateri: Materi = {
-        id: Date.now(), judul:fJudul, deskripsi:fDeskripsi,
-        tipe:fTipe, pertemuan:Number(fPertemuan),
-        ukuran: fFile ? `${(fFile.size / 1024 / 1024).toFixed(1)} MB` : undefined,
-        tanggal: "Baru saja",
-      };
-      setMateriList([...materiList, newMateri]);
+    setSaving(true);
+    setFError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("judul", fJudul);
+      formData.append("deskripsi", fDeskripsi);
+      formData.append("tipe", fTipe);
+      formData.append("pertemuan", fPertemuan);
+      formData.append("url", fTipe === "link" ? fLink : "");
+      if (fFile) formData.append("file", fFile);
+
+      const headers = authHeader(); // hanya Authorization, jangan set Content-Type (biar browser isi boundary)
+
+      if (editItem) {
+        const res = await fetch(`${BACKEND}/api/guru/materi/${editItem.id}`, {
+          method: "PUT",
+          headers,
+          body: formData,
+        });
+        const json = await res.json();
+        if (!json.success) { setFError(json.message || "Gagal menyimpan."); setSaving(false); return; }
+
+        setMateriList(prev => prev.map(m =>
+          m.id === editItem.id
+            ? { ...m, judul: fJudul, deskripsi: fDeskripsi, tipe: fTipe, pertemuan: Number(fPertemuan) }
+            : m
+        ));
+      } else {
+        formData.append("kelasId", params.id);
+        formData.append("mapel", kelasData.mapel);
+
+        const res = await fetch(`${BACKEND}/api/guru/materi`, {
+          method: "POST",
+          headers,
+          body: formData,
+        });
+        const json = await res.json();
+        if (!json.success) { setFError(json.message || "Gagal menyimpan."); setSaving(false); return; }
+
+        const m = json.data;
+        setMateriList(prev => [{
+          id: m._id,
+          judul: m.judul,
+          deskripsi: m.deskripsi ?? "",
+          tipe: m.tipe ?? fTipe,
+          ukuran: m.ukuran ?? undefined,
+          tanggal: "Baru saja",
+          pertemuan: m.pertemuan,
+        }, ...prev]);
+      }
+
+      setShowForm(false);
+    } catch {
+      setFError("Gagal menyimpan. Coba lagi.");
+    } finally {
+      setSaving(false);
     }
-    setShowForm(false);
   };
 
-  const handleDelete = (item: Materi) => {
-    setMateriList(materiList.filter(m => m.id !== item.id));
-    setShowDelete(null);
+  // ── Delete ────────────────────────────────────────────────────────────────
+  const handleDelete = async (item: Materi) => {
+    try {
+      const res = await fetch(`${BACKEND}/api/guru/materi/${item.id}`, {
+        method: "DELETE",
+        headers: authHeader(),
+      });
+      const json = await res.json();
+      if (!json.success) { alert(json.message || "Gagal menghapus."); return; }
+      setMateriList(prev => prev.filter(m => m.id !== item.id));
+      setShowDelete(null);
+    } catch {
+      alert("Gagal menghapus. Periksa koneksi.");
+    }
   };
 
   return (
@@ -183,10 +305,10 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
               </svg>
             </button>
             <div className={styles.mapelInfo}>
-              <div className={styles.mapelDot} style={{ background: data.warna }} />
-              <h1 className={styles.pageTitle}>{data.mapel}</h1>
+              <div className={styles.mapelDot} style={{ background: "#dbeafe" }} />
+              <h1 className={styles.pageTitle}>{kelasData.mapel}</h1>
             </div>
-            <span className={styles.kelasTag}>Kelas {data.kelas}</span>
+            <span className={styles.kelasTag}>Kelas {kelasData.nama}</span>
           </div>
           <div className={styles.userChip}>
             <div className={styles.userAvatar}>
@@ -202,7 +324,6 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
         </header>
 
         <div className={styles.content}>
-          {/* Filter pertemuan */}
           <div className={styles.filterRow}>
             <button className={`${styles.filterBtn} ${filterPertemuan === "semua" ? styles.filterBtnActive : ""}`} onClick={() => setFilter("semua")}>Semua</button>
             {pertemuanList.map((p) => (
@@ -212,7 +333,6 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
             ))}
           </div>
 
-          {/* Empty state */}
           {filtered.length === 0 && (
             <div className={styles.emptyState}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -223,7 +343,6 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
             </div>
           )}
 
-          {/* List materi */}
           <div className={styles.materiList}>
             {filtered.map((item) => {
               const ts = TIPE_STYLE[item.tipe];
@@ -244,7 +363,6 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
                       <span className={styles.materiTanggal}>{item.tanggal}</span>
                     </div>
                   </div>
-                  {/* Edit & Delete */}
                   <div className={styles.materiActions}>
                     <button className={styles.editBtn} title="Edit" onClick={() => openForm(item)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -265,7 +383,6 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* FAB Upload */}
         <button className={styles.fab} onClick={() => openForm()} title="Upload Materi">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -310,7 +427,6 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
               <textarea className={styles.formTextarea} placeholder="Deskripsi singkat..." value={fDeskripsi} onChange={(e) => setFDeskripsi(e.target.value)} rows={3} />
             </div>
 
-            {/* Upload file atau link */}
             {fTipe === "link" ? (
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>URL Link</label>
@@ -332,12 +448,16 @@ export default function MateriGuru({ params }: { params: { id: string } }) {
             {fError && <p className={styles.formError}>{fError}</p>}
 
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>Batal</button>
-              <button className={styles.submitBtn} onClick={handleSave}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                {editItem ? "Simpan Perubahan" : "Upload"}
+              <button className={styles.cancelBtn} onClick={() => setShowForm(false)} disabled={saving}>Batal</button>
+              <button className={styles.submitBtn} onClick={handleSave} disabled={saving}>
+                {saving ? "Menyimpan..." : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    {editItem ? "Simpan Perubahan" : "Upload"}
+                  </>
+                )}
               </button>
             </div>
           </div>

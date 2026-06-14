@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./dashboard-guru.module.css";
 import NotifBell from "@/components/NotifBell";
 
-<<<<<<< Updated upstream
-// ── Tipe ────────────────────────────────────────────────────────────────────
-=======
 const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
 function authHeader(): HeadersInit {
@@ -15,50 +12,25 @@ function authHeader(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
->>>>>>> Stashed changes
 type Kelas = {
-  id: number;
+  _id: string;
   mapel: string;
-<<<<<<< Updated upstream
-  kelas: string;
-  jumlahSiswa: number;
-=======
   nama: string;
   kodeKelas: string;
   namaGuru: string;
   anggota: string[];
   createdAt: string;
->>>>>>> Stashed changes
   updatedAt: string;
-  warna: string;
-  icon: string;
 };
 
-<<<<<<< Updated upstream
-// ── Mock data — ganti dengan fetch GET /api/guru/kelas ───────────────────────
-const INIT_KELAS: Kelas[] = [
-  { id:1, mapel:"Matematika", kelas:"10 A", jumlahSiswa:32, updatedAt:"Hari ini",    warna:"#dbeafe", icon:"math"  },
-  { id:2, mapel:"Matematika", kelas:"10 B", jumlahSiswa:30, updatedAt:"Hari ini",    warna:"#dbeafe", icon:"math"  },
-  { id:3, mapel:"Matematika", kelas:"11 A", jumlahSiswa:28, updatedAt:"Kemarin",     warna:"#dbeafe", icon:"math"  },
-  { id:4, mapel:"Matematika", kelas:"11 B", jumlahSiswa:31, updatedAt:"Kemarin",     warna:"#dbeafe", icon:"math"  },
-  { id:5, mapel:"Matematika", kelas:"12 A", jumlahSiswa:29, updatedAt:"3 hari lalu", warna:"#dbeafe", icon:"math"  },
-  { id:6, mapel:"Matematika", kelas:"12 B", jumlahSiswa:27, updatedAt:"3 hari lalu", warna:"#dbeafe", icon:"math"  },
-];
 
-const MAPEL_OPTIONS = [
-  { label:"Matematika",       warna:"#dbeafe", icon:"math"  },
-  { label:"Bahasa Indonesia", warna:"#fce7f3", icon:"book"  },
-  { label:"Bahasa Inggris",   warna:"#d1fae5", icon:"book"  },
-  { label:"Fisika",           warna:"#fef9c3", icon:"atom"  },
-  { label:"Kimia",            warna:"#ede9fe", icon:"flask" },
-  { label:"Biologi",          warna:"#ffedd5", icon:"leaf"  },
-  { label:"Sejarah",          warna:"#f0fdf4", icon:"clock" },
-  { label:"Ekonomi",          warna:"#fdf2f8", icon:"chart" },
-  { label:"PJOK",             warna:"#dcfce7", icon:"sport" },
-  { label:"Agama",            warna:"#fff7ed", icon:"book"  },
-];
+function getMapelMeta(mapel: string) {
+  return MAPEL_META[mapel] ?? { warna: "#f1f5f9", icon: "book" };
+}
 
-=======
+const MAPEL_OPTIONS = Object.keys(MAPEL_META);
+
+
 const MAPEL_META: Record<string, { warna: string; icon: string }> = {
   "Matematika":       { warna: "#dbeafe", icon: "math"  },
   "Bahasa Indonesia": { warna: "#fce7f3", icon: "book"  },
@@ -77,7 +49,6 @@ function getMapelMeta(mapel: string) {
 }
 
 const MAPEL_OPTIONS = Object.keys(MAPEL_META);
->>>>>>> Stashed changes
 const KELAS_OPTIONS = [
   "10 A","10 B","10 C","10 D",
   "11 A","11 B","11 C","11 D",
@@ -134,50 +105,24 @@ export default function DashboardGuru() {
   const [expanded, setExpanded]     = useState(false);
   const [showLogout, setShowLogout] = useState(false);
   const [activeTab, setActiveTab]   = useState(1);
-<<<<<<< Updated upstream
-  const [kelasList, setKelasList]   = useState<Kelas[]>(INIT_KELAS);
-=======
 
   const [kelasList, setKelasList]   = useState<Kelas[]>([]);
   const [loading, setLoading]       = useState(true);
->>>>>>> Stashed changes
+
 
   // Form tambah kelas
   const [showForm, setShowForm]     = useState(false);
-  const [fMapel, setFMapel]         = useState(MAPEL_OPTIONS[0].label);
+  const [fMapel, setFMapel]         = useState(MAPEL_OPTIONS[0]);
   const [fKelas, setFKelas]         = useState(KELAS_OPTIONS[0]);
-  const [fJumlah, setFJumlah]       = useState("");
+  const [fKode, setFKode]           = useState("");
   const [fError, setFError]         = useState("");
+  const [saving, setSaving]         = useState(false);
 
-<<<<<<< Updated upstream
-  const handleTambahKelas = () => {
-    if (!fJumlah || isNaN(Number(fJumlah)) || Number(fJumlah) <= 0) {
-      setFError("Jumlah siswa harus diisi dengan angka yang valid.");
       return;
     }
-    // Cek duplikat
-    const duplikat = kelasList.find(k => k.mapel === fMapel && k.kelas === fKelas);
-    if (duplikat) {
-      setFError(`${fMapel} kelas ${fKelas} sudah ada.`);
-      return;
-    }
-    const opt = MAPEL_OPTIONS.find(m => m.label === fMapel)!;
-    const newKelas: Kelas = {
-      id: Date.now(),
-      mapel: fMapel,
-      kelas: fKelas,
-      jumlahSiswa: Number(fJumlah),
-      updatedAt: "Baru saja",
-      warna: opt.warna,
-      icon: opt.icon,
-    };
-    setKelasList([...kelasList, newKelas]);
-    setFMapel(MAPEL_OPTIONS[0].label);
-    setFKelas(KELAS_OPTIONS[0]);
-    setFJumlah("");
+    setSaving(true);
     setFError("");
     setShowForm(false);
-=======
   // ── BARU: Modal info kelas (tombol ⓘ) ────────────────────────────────────
   const [infoKelas, setInfoKelas]       = useState<Kelas | null>(null);
   const [showHapus, setShowHapus]       = useState(false); // konfirmasi hapus
@@ -230,7 +175,7 @@ export default function DashboardGuru() {
       }
     } catch { /* silent */ }
     finally { setDeleting(false); }
->>>>>>> Stashed changes
+
   };
 
   return (
@@ -294,47 +239,6 @@ export default function DashboardGuru() {
 
         {/* Grid Kelas */}
         <div className={styles.content}>
-<<<<<<< Updated upstream
-          <div className={styles.grid}>
-            {kelasList.map((kelas) => (
-              <a key={kelas.id} href={`/dashboard/guru/materi/${kelas.id}`} className={styles.card}>
-                <div className={styles.cardTop} style={{ background: kelas.warna }}>
-                  <div className={styles.cardIconWrap}>
-                    <MapelIcon icon={kelas.icon} />
-                  </div>
-                  <div className={styles.cardActions}>
-                    <button className={styles.cardBtn} title="Upload Materi" onClick={(e) => { e.preventDefault(); router.push(`/dashboard/guru/materi/${kelas.id}`); }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                      </svg>
-                    </button>
-                    <button className={styles.cardBtn} title="Info" onClick={(e) => e.preventDefault()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.cardBottom}>
-                  <div className={styles.cardInfo}>
-                    <span className={styles.cardMapel}>{kelas.mapel}</span>
-                    <span className={styles.cardKelas}>Kelas {kelas.kelas}</span>
-                  </div>
-                  <div className={styles.cardMeta}>
-                    <span className={styles.cardSiswa}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                      {kelas.jumlahSiswa} siswa
-                    </span>
-                    <span className={styles.cardUpdated}>Updated {kelas.updatedAt}</span>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-=======
           {loading ? (
             <p style={{ color: "#64748b", padding: "2rem", textAlign: "center" }}>Memuat kelas...</p>
           ) : kelasList.length === 0 ? (
@@ -414,7 +318,6 @@ export default function DashboardGuru() {
               })}
             </div>
           )}
->>>>>>> Stashed changes
         </div>
 
         {/* FAB */}
@@ -440,7 +343,7 @@ export default function DashboardGuru() {
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Mata Pelajaran</label>
               <select className={styles.formSelect} value={fMapel} onChange={(e) => setFMapel(e.target.value)}>
-                {MAPEL_OPTIONS.map(m => <option key={m.label}>{m.label}</option>)}
+                {MAPEL_OPTIONS.map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
             <div className={styles.formGroup}>
@@ -450,32 +353,21 @@ export default function DashboardGuru() {
               </select>
             </div>
             <div className={styles.formGroup}>
-<<<<<<< Updated upstream
-              <label className={styles.formLabel}>Jumlah Siswa</label>
               <input
                 className={styles.formInput}
-                type="number"
-                placeholder="contoh: 32"
-                value={fJumlah}
-                onChange={(e) => setFJumlah(e.target.value)}
-                min="1"
+                type="text"
+                placeholder="contoh: MTK10A"
+                value={fKode}
+                onChange={(e) => setFKode(e.target.value)}
               />
-=======
+
               <label className={styles.formLabel}>Kode Kelas</label>
               <input className={styles.formInput} type="text" placeholder="contoh: MTK10A"
                 value={fKode} onChange={(e) => setFKode(e.target.value)} />
->>>>>>> Stashed changes
+
             </div>
             {fError && <p className={styles.formError}>{fError}</p>}
             <div className={styles.modalActions}>
-<<<<<<< Updated upstream
-              <button className={styles.cancelBtn} onClick={() => { setShowForm(false); setFError(""); }}>Batal</button>
-              <button className={styles.submitBtn} onClick={handleTambahKelas}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Tambah Kelas
-=======
               <button className={styles.cancelBtn} onClick={() => { setShowForm(false); setFError(""); }} disabled={saving}>Batal</button>
               <button className={styles.submitBtn} onClick={handleTambahKelas} disabled={saving}>
                 {saving ? "Menyimpan..." : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Kelas</>}
@@ -652,7 +544,7 @@ export default function DashboardGuru() {
                 {deleting ? "Menghapus..." : (
                   <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Ya, Hapus Kelas</>
                 )}
->>>>>>> Stashed changes
+
               </button>
             </div>
           </div>

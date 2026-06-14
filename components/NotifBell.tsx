@@ -16,7 +16,7 @@ function timeAgo(iso: string): string {
 }
 
 export default function NotifBell() {
-  const { notifs, unreadCount, readIds, markRead, markAllRead, loading, pengumumanPath } = useNotif();
+  const { notifs, unreadCount, readIds, markRead, markAllRead, loading } = useNotif();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function NotifBell() {
   function handleClickNotif(item: NotifItem) {
     markRead(item.id);
     setOpen(false);
-    router.push(pengumumanPath);
+    router.push("/dashboard/siswa/pengumuman");
   }
 
   return (
@@ -234,7 +234,7 @@ export default function NotifBell() {
           {/* Footer */}
           {notifs.length > 0 && (
             <button
-              onClick={() => { setOpen(false); router.push(pengumumanPath); }}
+              onClick={() => { setOpen(false); router.push("/dashboard/siswa/pengumuman"); }}
               style={{
                 width: "100%",
                 padding: "11px 16px",

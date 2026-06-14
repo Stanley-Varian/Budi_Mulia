@@ -32,10 +32,101 @@
     "memproses": "Memproses...",
     "tutup": "Tutup"
   },
+  "jadwal": {
+    "title": "Jadwal",
+    "jadwalPelajaran": "Jadwal Pelajaran",
+    "ekstrakurikuler": "Ekstrakurikuler",
+    "hariIni": "Hari ini",
+    "istirahat": "Istirahat",
+    "jam": "Jam",
+    "waktu": "Waktu",
+    "keterangan": "Keterangan:",
+    "belumAdaEkskul": "Belum ada data ekstrakurikuler."
+  },
+  "materi": {
+    "semua": "Semua",
+    "pertemuan": "Pertemuan",
+    "loading": "Loading materi...",
+    "belumAda": "Belum ada materi."
+  },
+  "pengumuman": {
+    "title": "Pengumuman",
+    "penting": "Penting",
+    "belumAda": "Belum ada pengumuman.",
+    "memuat": "Memuat pengumuman..."
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "profil": "Profil",
+    "profilDesc": "Informasi ini dikelola oleh admin sekolah.",
+    "namaLengkap": "Nama Lengkap",
+    "nisn": "NISN",
+    "kelas": "Kelas",
+    "username": "Username",
+    "infoNote": "Untuk mengubah data profil, hubungi admin sekolah.",
+    "notifikasi": "Notifikasi",
+    "notifikasiDesc": "Atur notifikasi yang ingin kamu terima.",
+    "notifPengumuman": "Pengumuman Baru",
+    "notifPengumumanDesc": "Notifikasi saat ada pengumuman dari guru atau admin",
+    "notifMateri": "Materi Baru",
+    "notifMateriDesc": "Notifikasi saat guru mengupload materi baru",
+    "notifJadwal": "Perubahan Jadwal",
+    "notifJadwalDesc": "Notifikasi saat ada perubahan jadwal pelajaran",
+    "bahasa": "Bahasa",
+    "bahasaDesc": "Pilih bahasa tampilan aplikasi.",
+    "siswa": "Siswa"
+  },
   "logout": {
     "title": "Keluar dari Akun?",
     "desc": "Kamu akan keluar dari akun",
     "batal": "Batal",
     "konfirmasi": "Ya, Keluar"
-  }
+  },
+  "state": {
+    "memuat": "Memuat data...",
+    "gagal": "Gagal memuat data.",
+    "belumAda": "Belum ada data."
+  },
+
+  "guru": {
+  "jadwalMengajar": "Jadwal Mengajar",
+  "memuatJadwal": "Memuat jadwal...",
+  "kelasYangDiajar": "Kelas yang diajar:",
+  "hariIni": "Hari ini",
+  "istirahat": "Istirahat",
+  "jam": "Jam",
+  "waktu": "Waktu",
+  "pengumuman": "Pengumuman",
+  "buatPengumuman": "Buat Pengumuman",
+  "editPengumuman": "Edit Pengumuman",
+  "hapusPengumuman": "Hapus Pengumuman?",
+  "memuatPengumuman": "Memuat pengumuman...",
+  "belumAdaPengumuman": "Belum ada pengumuman. Klik tombol + untuk membuat.",
+  "judul": "Judul",
+  "isi": "Isi",
+  "kategori": "Kategori",
+  "ditujukanUntuk": "Ditujukan untuk",
+  "penting": "Penting?",
+  "simpanPerubahan": "Simpan Perubahan",
+  "kirimPengumuman": "Kirim Pengumuman",
+  "menyimpan": "Menyimpan...",
+  "semua": "Semua (Siswa & Guru)",
+  "siswaOnly": "Siswa saja",
+  "guruOnly": "Guru saja",
+  "materi": "Materi",
+  "uploadMateri": "Upload Materi",
+  "editMateri": "Edit Materi",
+  "hapusMateri": "Hapus Materi?",
+  "belumAdaMateri": "Belum ada materi untuk kelas ini.",
+  "uploadSekarang": "Upload Materi Sekarang",
+  "tipeMateri": "Tipe Materi",
+  "pertemuanKe": "Pertemuan ke-",
+  "deskripsi": "Deskripsi",
+  "urlLink": "URL Link",
+  "gantiFile": "Ganti File (opsional)",
+  "uploadFile": "Upload File",
+  "klikPilihFile": "Klik untuk pilih file",
+  "pertemuan": "Pertemuan",
+  "semua2": "Semua"
+}
 }

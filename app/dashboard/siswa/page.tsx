@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./dashboard-siswa.module.css";
-import { joinKelas, getMapelList, getUser } from "@/lib/api/siswa";
+import { joinKelas, leaveKelas, getMapelList, getUser } from "@/lib/api/siswa";
 import { useTranslation } from "@/lib/api/UseTranslation";
 import NotifBell from "@/components/NotifBell";
 import { useNotif } from "@/lib/api/useNotif";
@@ -64,13 +64,11 @@ export default function DashboardSiswa() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
 
-  useEffect(() => { setUser(getUser()); }, []);
-  useEffect(() => {
-    getMapelList()
-      .then((data) => setMapelList(data))
-      .catch((err) => setMapelError(err.message || t("state.gagal")))
-      .finally(() => setMapelLoading(false));
-  }, []);
+  // State untuk keluar kelas
+  const [showLeave, setShowLeave] = useState(false);
+  const [leaveTarget, setLeaveTarget] = useState<Mapel | null>(null);
+  const [leaveLoading, setLeaveLoading] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
 
   const NAV_ICONS = [
     <svg key="d" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>,
@@ -79,6 +77,22 @@ export default function DashboardSiswa() {
     <svg key="s" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
   ];
 
+  useEffect(() => { setUser(getUser()); }, []);
+  useEffect(() => {
+    getMapelList()
+      .then((data) => setMapelList(data))
+      .catch((err) => setMapelError(err.message || t("state.gagal")))
+      .finally(() => setMapelLoading(false));
+  }, []);
+
+  const reloadMapel = () => {
+    setMapelLoading(true);
+    getMapelList()
+      .then((data) => setMapelList(data))
+      .catch((err) => setMapelError(err.message || t("state.gagal")))
+      .finally(() => setMapelLoading(false));
+  };
+
   const handleJoinKelas = async () => {
     if (!kodeInput.trim()) { setJoinError("Kode kelas tidak boleh kosong."); return; }
     setJoinLoading(true); setJoinError(null); setJoinSuccess(null);
@@ -86,12 +100,26 @@ export default function DashboardSiswa() {
       const kelas = await joinKelas(kodeInput);
       setJoinSuccess(`Berhasil bergabung ke kelas ${kelas.nama || kelas.mapel}!`);
       setKodeInput("");
-      getMapelList().then((data) => setMapelList(data)).catch(() => null);
+      reloadMapel();
     } catch (err: unknown) {
       setJoinError(err instanceof Error ? err.message : "Gagal bergabung. Coba lagi.");
     } finally { setJoinLoading(false); }
   };
 
+  const handleLeaveKelas = async () => {
+    if (!leaveTarget) return;
+    setLeaveLoading(true); setLeaveError(null);
+    try {
+      await leaveKelas(leaveTarget.id);
+      setShowLeave(false);
+      setLeaveTarget(null);
+      reloadMapel();
+    } catch (err: unknown) {
+      setLeaveError(err instanceof Error ? err.message : "Gagal keluar kelas. Coba lagi.");
+    } finally { setLeaveLoading(false); }
+  };
+
+  const handleCloseLeave = () => { setShowLeave(false); setLeaveTarget(null); setLeaveError(null); };
   const handleCloseJoin = () => { setShowJoin(false); setKodeInput(""); setJoinError(null); setJoinSuccess(null); };
   const TABS = [t("tabs.baru"), t("tabs.terbaru"), t("tabs.mingguIni"), t("tabs.bulanIni")];
 
@@ -117,6 +145,7 @@ export default function DashboardSiswa() {
       </aside>
       {expanded && <div className={styles.overlay} onClick={() => setExpanded(false)} />}
 
+      {/* Logout Modal */}
       {showLogout && (
         <div className={styles.modalOverlay} onClick={() => setShowLogout(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -131,6 +160,35 @@ export default function DashboardSiswa() {
         </div>
       )}
 
+      {/* Leave Kelas Modal */}
+      {showLeave && leaveTarget && (
+        <div className={styles.modalOverlay} onClick={handleCloseLeave}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalIcon}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <h3 className={styles.modalTitle}>Keluar Kelas</h3>
+            <p className={styles.modalDesc}>
+              Yakin ingin keluar dari kelas <strong>{leaveTarget.mapel}</strong>? Kamu perlu kode untuk bergabung lagi.
+            </p>
+            {leaveError && (
+              <div style={{ color: "#ef4444", fontSize: 13, marginBottom: 8, textAlign: "center" }}>
+                {leaveError}
+              </div>
+            )}
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={handleCloseLeave} disabled={leaveLoading}>Batal</button>
+              <button className={styles.confirmBtn} onClick={handleLeaveKelas} disabled={leaveLoading}>
+                {leaveLoading ? "Memproses..." : "Keluar Kelas"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Join Kelas Modal */}
       {showJoin && (
         <div className={styles.modalOverlay} onClick={handleCloseJoin}>
           <div className={styles.joinModal} onClick={(e) => e.stopPropagation()}>
@@ -200,8 +258,26 @@ export default function DashboardSiswa() {
                   <div className={styles.cardTop}>
                     <div className={styles.cardIconWrap}><MapelIcon icon={mapel.mapel} /></div>
                     <div className={styles.cardActions}>
-                      <button className={styles.cardBtn} onClick={(e) => e.preventDefault()}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>
-                      <button className={styles.cardBtn} onClick={(e) => e.preventDefault()}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></button>
+                      <button className={styles.cardBtn} onClick={(e) => e.preventDefault()}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </button>
+                      {/* Tombol keluar kelas */}
+                      <button
+                        className={styles.cardBtn}
+                        style={{ color: "#ef4444" }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setLeaveTarget(mapel);
+                          setShowLeave(true);
+                        }}
+                        title="Keluar kelas"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                          <polyline points="16 17 21 12 16 7"/>
+                          <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                   <div className={styles.cardBottom}>

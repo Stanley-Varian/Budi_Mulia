@@ -25,7 +25,7 @@ function saveReadIds(ids: Set<string>) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids])); } catch {}
 }
 
-// Ambil role dari localStorage
+// ✅ FIX: baca role dari localStorage
 function getUserRole(): string | null {
   try {
     const user = localStorage.getItem("user");
@@ -40,14 +40,21 @@ export function useNotif() {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
+    // ✅ FIX: baca readIds sync sebelum fetch, hindari flicker
     setReadIds(getReadIds());
+
     const userRole = getUserRole();
     setRole(userRole);
 
+    // ✅ FIX: pilih endpoint sesuai role, bukan hardcode siswa
     const fetchFn = userRole === "guru" ? getPengumumanGuru : getPengumumanSiswa;
 
     fetchFn()
-      .then((data) => setNotifs(data.list ?? []))
+      .then((data) => {
+        // handle berbagai shape response yang mungkin
+        const list = data?.list ?? data ?? [];
+        setNotifs(Array.isArray(list) ? list : []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -69,7 +76,7 @@ export function useNotif() {
     setReadIds(all);
   }, [notifs]);
 
-  // Path pengumuman sesuai role
+  // ✅ FIX: tambahkan pengumumanPath yang dibutuhkan NotifBell.tsx
   const pengumumanPath =
     role === "guru"
       ? "/dashboard/guru/pengumuman"
