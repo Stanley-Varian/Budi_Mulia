@@ -3,42 +3,21 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./manajemen-user.module.css";
-import { getUsers, createUser, updateUser, deleteUser } from "@/lib/api/admin";
+import { getUsers, createUser, updateUser, deleteUser, resetPassword } from "@/lib/api/admin";
 
 // ── Tipe ────────────────────────────────────────────────────────────────────
 type Role = "siswa" | "guru";
 
 type User = {
-  id: number;
+  id: string; // ← pakai string, bukan number
   nama: string;
   username: string;
   role: Role;
-  // siswa
   nisn?: string;
   kelas?: string;
-  // guru
   nip?: string;
   mapel?: string;
 };
-
-// ── Mock data ────────────────────────────────────────────────────────────────
-const INIT_SISWA: User[] = [
-  { id:1,  role:"siswa", nama:"Stanley Varian Rasa",  username:"stanley.varian",  nisn:"0012345678", kelas:"10 B" },
-  { id:2,  role:"siswa", nama:"Rina Anggraini",        username:"rina.anggraini",  nisn:"0012345679", kelas:"10 A" },
-  { id:3,  role:"siswa", nama:"Budi Santoso",          username:"budi.santoso",    nisn:"0012345680", kelas:"10 C" },
-  { id:4,  role:"siswa", nama:"Dewi Kusuma",           username:"dewi.kusuma",     nisn:"0012345681", kelas:"11 A" },
-  { id:5,  role:"siswa", nama:"Fajar Ramadhan",        username:"fajar.ramadhan",  nisn:"0012345682", kelas:"11 B" },
-  { id:6,  role:"siswa", nama:"Gita Permata",          username:"gita.permata",    nisn:"0012345683", kelas:"12 A" },
-];
-
-const INIT_GURU: User[] = [
-  { id:101, role:"guru", nama:"Bpk. Andi Saputra",   username:"andi.saputra",   nip:"198501012010011001", mapel:"Matematika"       },
-  { id:102, role:"guru", nama:"Ibu Sari Dewi",        username:"sari.dewi",      nip:"198602022011012001", mapel:"Bahasa Indonesia" },
-  { id:103, role:"guru", nama:"Ibu Rina Marlina",     username:"rina.marlina",   nip:"198703032012013001", mapel:"Bahasa Inggris"   },
-  { id:104, role:"guru", nama:"Bpk. Dedi Kurniawan",  username:"dedi.kurniawan", nip:"198804042013014001", mapel:"Fisika"           },
-  { id:105, role:"guru", nama:"Ibu Wulandari",        username:"wulandari",      nip:"198905052014015001", mapel:"Kimia"            },
-  { id:106, role:"guru", nama:"Bpk. Hendra Gunawan",  username:"hendra.gunawan", nip:"199006062015016001", mapel:"Biologi"          },
-];
 
 const KELAS_OPTIONS = ["10 A","10 B","10 C","10 D","10 E","10 F","10 G","11 A","11 B","11 C","11 D","11 E","12 A","12 B","12 C","12 D","12 E"];
 const MAPEL_OPTIONS = ["Matematika","Bahasa Indonesia","Bahasa Inggris","Fisika","Kimia","Biologi","Sejarah","Ekonomi","PJOK","Agama","PKN","BK"];
@@ -65,17 +44,24 @@ export default function ManajemenUser() {
   const [editItem, setEditItem]       = useState<User | null>(null);
   const [showDelete, setShowDelete]   = useState<User | null>(null);
   const [showReset, setShowReset]     = useState<User | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [toast, setToast]             = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   // Form state
-  const [fNama, setFNama]       = useState("");
+  const [fNama, setFNama]         = useState("");
   const [fUsername, setFUsername] = useState("");
-  const [fNisn, setFNisn]       = useState("");
-  const [fKelas, setFKelas]     = useState(KELAS_OPTIONS[0]);
-  const [fNip, setFNip]         = useState("");
-  const [fMapel, setFMapel]     = useState(MAPEL_OPTIONS[0]);
-  const [fError, setFError]     = useState("");
+  const [fNisn, setFNisn]         = useState("");
+  const [fKelas, setFKelas]       = useState(KELAS_OPTIONS[0]);
+  const [fNip, setFNip]           = useState("");
+  const [fMapel, setFMapel]       = useState(MAPEL_OPTIONS[0]);
+  const [fError, setFError]       = useState("");
 
-  // Fetch users dari backend
+  const showToast = (type: "success" | "error", message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // ── Fetch users ────────────────────────────────────────────────────────────
   const fetchUsers = async () => {
     setLoadingData(true);
     try {
@@ -83,8 +69,9 @@ export default function ManajemenUser() {
         getUsers({ role: "siswa" }),
         getUsers({ role: "guru" }),
       ]);
-      setSiswaList(resSiswa.data.map((u: any) => ({ ...u, id: u._id })));
-      setGuruList(resGuru.data.map((u: any) => ({ ...u, id: u._id })));
+      // ← FIX: String(_id) supaya updateUser/deleteUser dapat ID yang benar
+      setSiswaList(resSiswa.data.map((u: any) => ({ ...u, id: String(u._id) })));
+      setGuruList(resGuru.data.map((u: any) => ({ ...u, id: String(u._id) })));
     } catch (err) {
       console.error("Gagal fetch users:", err);
     } finally {
@@ -94,7 +81,7 @@ export default function ManajemenUser() {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const list = activeTab === "siswa" ? siswaList : guruList;
+  const list     = activeTab === "siswa" ? siswaList : guruList;
   const filtered = list.filter(u =>
     u.nama.toLowerCase().includes(search.toLowerCase()) ||
     u.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -102,12 +89,16 @@ export default function ManajemenUser() {
     (u.mapel ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
+  // ── Open form ──────────────────────────────────────────────────────────────
   const openForm = (item?: User) => {
     if (item) {
       setEditItem(item);
-      setFNama(item.nama); setFUsername(item.username);
-      setFNisn(item.nisn ?? ""); setFKelas(item.kelas ?? KELAS_OPTIONS[0]);
-      setFNip(item.nip ?? ""); setFMapel(item.mapel ?? MAPEL_OPTIONS[0]);
+      setFNama(item.nama);
+      setFUsername(item.username);
+      setFNisn(item.nisn ?? "");
+      setFKelas(item.kelas ?? KELAS_OPTIONS[0]);
+      setFNip(item.nip ?? "");
+      setFMapel(item.mapel ?? MAPEL_OPTIONS[0]);
     } else {
       setEditItem(null);
       setFNama(""); setFUsername(""); setFNisn("");
@@ -117,16 +108,36 @@ export default function ManajemenUser() {
     setShowForm(true);
   };
 
+  // ── Save (create / update) ─────────────────────────────────────────────────
   const handleSave = async () => {
     if (!fNama.trim() || !fUsername.trim()) { setFError("Nama dan username wajib diisi."); return; }
     if (activeTab === "siswa" && !fNisn.trim()) { setFError("NISN wajib diisi."); return; }
-    if (activeTab === "guru" && !fNip.trim()) { setFError("NIP wajib diisi."); return; }
+    if (activeTab === "guru"  && !fNip.trim())  { setFError("NIP wajib diisi."); return; }
+
     setSaveLoading(true);
     try {
       if (editItem) {
-        await updateUser(String(editItem.id), { nama: fNama, username: fUsername, nisn: fNisn, kelas: fKelas, nip: fNip, mapel: fMapel });
+        await updateUser(editItem.id, {
+          nama: fNama,
+          username: fUsername,
+          nisn: fNisn || undefined,
+          kelas: fKelas || undefined,
+          nip: fNip || undefined,
+          mapel: fMapel || undefined,
+        });
+        showToast("success", "Data berhasil diperbarui.");
       } else {
-        await createUser({ nama: fNama, username: fUsername, password: "sekolah123", role: activeTab, nisn: fNisn, kelas: fKelas, nip: fNip, mapel: fMapel });
+        await createUser({
+          nama: fNama,
+          username: fUsername,
+          password: "sekolah123",
+          role: activeTab,
+          nisn: fNisn || undefined,
+          kelas: fKelas || undefined,
+          nip: fNip || undefined,
+          mapel: fMapel || undefined,
+        });
+        showToast("success", `${activeTab === "siswa" ? "Siswa" : "Guru"} berhasil ditambahkan.`);
       }
       await fetchUsers();
       setShowForm(false);
@@ -137,18 +148,47 @@ export default function ManajemenUser() {
     }
   };
 
+  // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDelete = async (u: User) => {
     try {
-      await deleteUser(String(u.id));
+      await deleteUser(u.id);
       await fetchUsers();
-    } catch (err) {
-      console.error("Gagal hapus:", err);
+      showToast("success", `${u.nama} berhasil dihapus.`);
+    } catch (err: any) {
+      showToast("error", err.message || "Gagal menghapus.");
     }
     setShowDelete(null);
   };
 
+  // ── Reset password ─────────────────────────────────────────────────────────
+  const handleResetPassword = async (u: User) => {
+    setResetLoading(true);
+    try {
+      await resetPassword(u.id);
+      showToast("success", `Password ${u.nama} berhasil direset ke sekolah123.`);
+    } catch (err: any) {
+      showToast("error", err.message || "Gagal reset password.");
+    } finally {
+      setResetLoading(false);
+      setShowReset(null);
+    }
+  };
+
   return (
     <div className={styles.layout}>
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: 20, right: 20, zIndex: 9999,
+          background: toast.type === "success" ? "#16a34a" : "#ef4444",
+          color: "white", padding: "12px 20px", borderRadius: 8,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)", fontSize: "0.875rem",
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          {toast.type === "success" ? "✓" : "✕"} {toast.message}
+        </div>
+      )}
 
       {/* Sidebar */}
       <aside className={`${styles.sidebar} ${expanded ? styles.sidebarExpanded : ""}`}>
@@ -179,8 +219,6 @@ export default function ManajemenUser() {
 
       {/* Main */}
       <div className={`${styles.main} ${expanded ? styles.mainShifted : ""}`}>
-
-        {/* Topbar */}
         <header className={styles.topbar}>
           <h1 className={styles.pageTitle}>Manajemen User</h1>
           <div className={styles.userChip}>
@@ -197,20 +235,16 @@ export default function ManajemenUser() {
         </header>
 
         <div className={styles.content}>
-
           {/* Tab + Search + Tambah */}
           <div className={styles.toolbar}>
             <div className={styles.tabGroup}>
               <button className={`${styles.tabBtn} ${activeTab === "siswa" ? styles.tabBtnActive : ""}`} onClick={() => { setActiveTab("siswa"); setSearch(""); }}>
-                Siswa
-                <span className={styles.tabCount}>{siswaList.length}</span>
+                Siswa <span className={styles.tabCount}>{siswaList.length}</span>
               </button>
               <button className={`${styles.tabBtn} ${activeTab === "guru" ? styles.tabBtnActive : ""}`} onClick={() => { setActiveTab("guru"); setSearch(""); }}>
-                Guru
-                <span className={styles.tabCount}>{guruList.length}</span>
+                Guru <span className={styles.tabCount}>{guruList.length}</span>
               </button>
             </div>
-
             <div className={styles.toolbarRight}>
               <div className={styles.searchWrap}>
                 <svg className={styles.searchIcon} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -227,82 +261,79 @@ export default function ManajemenUser() {
             </div>
           </div>
 
+          {/* Loading state */}
+          {loadingData && (
+            <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+              Memuat data...
+            </div>
+          )}
+
           {/* Table */}
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>Nama</th>
-                  <th className={styles.th}>Username</th>
-                  {activeTab === "siswa" ? (
-                    <>
-                      <th className={styles.th}>NISN</th>
-                      <th className={styles.th}>Kelas</th>
-                    </>
-                  ) : (
-                    <>
-                      <th className={styles.th}>NIP</th>
-                      <th className={styles.th}>Mata Pelajaran</th>
-                    </>
-                  )}
-                  <th className={styles.thAction}>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
+          {!loadingData && (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
                   <tr>
-                    <td colSpan={5} className={styles.emptyRow}>
-                      {search ? `Tidak ada hasil untuk "${search}"` : `Belum ada data ${activeTab}.`}
-                    </td>
-                  </tr>
-                ) : filtered.map((u) => (
-                  <tr key={u.id} className={styles.tr}>
-                    <td className={styles.td}>
-                      <div className={styles.userCell}>
-                        <div className={styles.userInitial} style={{ background: activeTab === "siswa" ? "#dbeafe" : "#d1fae5", color: activeTab === "siswa" ? "#1e40af" : "#065f46" }}>
-                          {u.nama.charAt(0).toUpperCase()}
-                        </div>
-                        <span className={styles.userNama}>{u.nama}</span>
-                      </div>
-                    </td>
-                    <td className={styles.td}><span className={styles.mono}>{u.username}</span></td>
+                    <th className={styles.th}>Nama</th>
+                    <th className={styles.th}>Username</th>
                     {activeTab === "siswa" ? (
-                      <>
-                        <td className={styles.td}><span className={styles.mono}>{u.nisn}</span></td>
-                        <td className={styles.td}><span className={styles.kelasChip}>{u.kelas}</span></td>
-                      </>
+                      <><th className={styles.th}>NISN</th><th className={styles.th}>Kelas</th></>
                     ) : (
-                      <>
-                        <td className={styles.td}><span className={styles.mono}>{u.nip}</span></td>
-                        <td className={styles.td}><span className={styles.mapelChip}>{u.mapel}</span></td>
-                      </>
+                      <><th className={styles.th}>NIP</th><th className={styles.th}>Mata Pelajaran</th></>
                     )}
-                    <td className={styles.tdAction}>
-                      <div className={styles.actionBtns}>
-                        <button className={styles.resetBtn} title="Reset Password" onClick={() => setShowReset(u)}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                          </svg>
-                        </button>
-                        <button className={styles.editBtn} title="Edit" onClick={() => openForm(u)}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                          </svg>
-                        </button>
-                        <button className={styles.deleteBtn} title="Hapus" onClick={() => setShowDelete(u)}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                            <path d="M10 11v6"/><path d="M14 11v6"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
+                    <th className={styles.thAction}>Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className={styles.emptyRow}>
+                        {search ? `Tidak ada hasil untuk "${search}"` : `Belum ada data ${activeTab}.`}
+                      </td>
+                    </tr>
+                  ) : filtered.map((u) => (
+                    <tr key={u.id} className={styles.tr}>
+                      <td className={styles.td}>
+                        <div className={styles.userCell}>
+                          <div className={styles.userInitial} style={{ background: activeTab === "siswa" ? "#dbeafe" : "#d1fae5", color: activeTab === "siswa" ? "#1e40af" : "#065f46" }}>
+                            {u.nama.charAt(0).toUpperCase()}
+                          </div>
+                          <span className={styles.userNama}>{u.nama}</span>
+                        </div>
+                      </td>
+                      <td className={styles.td}><span className={styles.mono}>{u.username}</span></td>
+                      {activeTab === "siswa" ? (
+                        <><td className={styles.td}><span className={styles.mono}>{u.nisn}</span></td><td className={styles.td}><span className={styles.kelasChip}>{u.kelas}</span></td></>
+                      ) : (
+                        <><td className={styles.td}><span className={styles.mono}>{u.nip}</span></td><td className={styles.td}><span className={styles.mapelChip}>{u.mapel}</span></td></>
+                      )}
+                      <td className={styles.tdAction}>
+                        <div className={styles.actionBtns}>
+                          <button className={styles.resetBtn} title="Reset Password" onClick={() => setShowReset(u)}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                          </button>
+                          <button className={styles.editBtn} title="Edit" onClick={() => openForm(u)}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                          </button>
+                          <button className={styles.deleteBtn} title="Hapus" onClick={() => setShowDelete(u)}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                              <path d="M10 11v6"/><path d="M14 11v6"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           <div className={styles.tableFooter}>
             Menampilkan {filtered.length} dari {list.length} {activeTab}
@@ -325,7 +356,6 @@ export default function ManajemenUser() {
               <label className={styles.formLabel}>Nama Lengkap</label>
               <input className={styles.formInput} placeholder="Nama lengkap..." value={fNama} onChange={(e) => setFNama(e.target.value)} />
             </div>
-
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Username</label>
               <input className={styles.formInput} placeholder="username..." value={fUsername} onChange={(e) => setFUsername(e.target.value)} />
@@ -372,8 +402,8 @@ export default function ManajemenUser() {
 
             <div className={styles.modalActions}>
               <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>Batal</button>
-              <button className={styles.submitBtn} onClick={handleSave}>
-                {editItem ? "Simpan Perubahan" : `Tambah ${activeTab === "siswa" ? "Siswa" : "Guru"}`}
+              <button className={styles.submitBtn} onClick={handleSave} disabled={saveLoading}>
+                {saveLoading ? "Menyimpan..." : (editItem ? "Simpan Perubahan" : `Tambah ${activeTab === "siswa" ? "Siswa" : "Guru"}`)}
               </button>
             </div>
           </div>
@@ -393,7 +423,9 @@ export default function ManajemenUser() {
             <p className={styles.modalDesc}>Password <strong>{showReset.nama}</strong> akan direset ke <strong>sekolah123</strong>.</p>
             <div className={styles.modalActions}>
               <button className={styles.cancelBtn} onClick={() => setShowReset(null)}>Batal</button>
-              <button className={styles.submitBtn} onClick={() => setShowReset(null)}>Ya, Reset</button>
+              <button className={styles.submitBtn} onClick={() => handleResetPassword(showReset)} disabled={resetLoading}>
+                {resetLoading ? "Mereset..." : "Ya, Reset"}
+              </button>
             </div>
           </div>
         </div>
