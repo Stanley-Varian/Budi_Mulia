@@ -1,25 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./dashboard-admin.module.css";
-
-// ── Mock stats — ganti dengan fetch GET /api/admin/stats ────────────────────
-const STATS = [
-  { label:"Total Siswa",     value:420, icon:"siswa",  color:"#dbeafe", iconColor:"#2952cc" },
-  { label:"Total Guru",      value:32,  icon:"guru",   color:"#d1fae5", iconColor:"#065f46" },
-  { label:"Total Kelas",     value:21,  icon:"kelas",  color:"#ede9fe", iconColor:"#6d28d9" },
-  { label:"Pengumuman Aktif",value:8,   icon:"notif",  color:"#fef9c3", iconColor:"#854d0e" },
-];
-
-// ── Mock recent activity ─────────────────────────────────────────────────────
-const AKTIVITAS = [
-  { id:1, aksi:"Jadwal kelas 10 A - 10 G berhasil digenerate", waktu:"Hari ini, 09.14", tipe:"jadwal" },
-  { id:2, aksi:"Guru baru ditambahkan: Ibu Kartika, S.Pd (Biologi)", waktu:"Hari ini, 08.30", tipe:"user" },
-  { id:3, aksi:"Pengumuman 'Libur Akhir Semester' dipublikasikan", waktu:"Kemarin, 14.20", tipe:"pengumuman" },
-  { id:4, aksi:"Siswa baru ditambahkan: 32 siswa kelas 10 B", waktu:"Kemarin, 11.00", tipe:"user" },
-  { id:5, aksi:"Jadwal kelas 11 A - 11 E berhasil digenerate", waktu:"2 hari lalu, 10.45", tipe:"jadwal" },
-];
+import { getStats } from "@/lib/api/admin";
 
 const NAV = [
   { label:"Dashboard",    href:"/dashboard/admin",              active:true,  icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> },
@@ -39,14 +23,6 @@ function StatIcon({ icon }: { icon: string }) {
   }
 }
 
-function AktivitasIcon({ tipe }: { tipe: string }) {
-  switch (tipe) {
-    case "jadwal": return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
-    case "user":   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-    default:       return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
-  }
-}
-
 const AKTIVITAS_COLOR: Record<string, { bg: string; color: string }> = {
   jadwal:     { bg:"#dbeafe", color:"#2952cc" },
   user:       { bg:"#d1fae5", color:"#065f46" },
@@ -57,11 +33,30 @@ export default function DashboardAdmin() {
   const router = useRouter();
   const [expanded, setExpanded]     = useState(false);
   const [showLogout, setShowLogout] = useState(false);
+  const [stats, setStats] = useState({
+    totalSiswa: 0,
+    totalGuru: 0,
+    totalPengumuman: 0,
+    totalJadwal: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getStats()
+      .then((data) => setStats(data))
+      .catch((err) => console.error("Gagal fetch stats:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const STATS = [
+    { label:"Total Siswa",      value: stats.totalSiswa,      icon:"siswa",  color:"#dbeafe", iconColor:"#2952cc" },
+    { label:"Total Guru",       value: stats.totalGuru,       icon:"guru",   color:"#d1fae5", iconColor:"#065f46" },
+    { label:"Total Jadwal",     value: stats.totalJadwal,     icon:"kelas",  color:"#ede9fe", iconColor:"#6d28d9" },
+    { label:"Pengumuman Aktif", value: stats.totalPengumuman, icon:"notif",  color:"#fef9c3", iconColor:"#854d0e" },
+  ];
 
   return (
     <div className={styles.layout}>
-
-      {/* Sidebar */}
       <aside className={`${styles.sidebar} ${expanded ? styles.sidebarExpanded : ""}`}>
         <button className={styles.hamburger} onClick={() => setExpanded(!expanded)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -88,10 +83,7 @@ export default function DashboardAdmin() {
       </aside>
       {expanded && <div className={styles.overlay} onClick={() => setExpanded(false)} />}
 
-      {/* Main */}
       <div className={`${styles.main} ${expanded ? styles.mainShifted : ""}`}>
-
-        {/* Topbar */}
         <header className={styles.topbar}>
           <h1 className={styles.pageTitle}>Dashboard</h1>
           <div className={styles.userChip}>
@@ -108,8 +100,6 @@ export default function DashboardAdmin() {
         </header>
 
         <div className={styles.content}>
-
-          {/* Stats */}
           <div className={styles.statsGrid}>
             {STATS.map((s, i) => (
               <div key={i} className={styles.statCard}>
@@ -117,21 +107,21 @@ export default function DashboardAdmin() {
                   <span style={{ color: s.iconColor }}><StatIcon icon={s.icon} /></span>
                 </div>
                 <div className={styles.statInfo}>
-                  <div className={styles.statValue}>{s.value.toLocaleString("id-ID")}</div>
+                  <div className={styles.statValue}>
+                    {loading ? "..." : s.value.toLocaleString("id-ID")}
+                  </div>
                   <div className={styles.statLabel}>{s.label}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Quick Actions */}
           <div className={styles.sectionTitle}>Aksi Cepat</div>
           <div className={styles.quickActions}>
             <a href="/dashboard/admin/jadwal" className={styles.qaCard}>
               <div className={styles.qaIcon} style={{ background:"#dbeafe" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2952cc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
                 </svg>
               </div>
               <div className={styles.qaInfo}>
@@ -140,7 +130,6 @@ export default function DashboardAdmin() {
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </a>
-
             <a href="/dashboard/admin/users" className={styles.qaCard}>
               <div className={styles.qaIcon} style={{ background:"#d1fae5" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#065f46" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -154,7 +143,6 @@ export default function DashboardAdmin() {
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </a>
-
             <a href="/dashboard/admin/pengumuman" className={styles.qaCard}>
               <div className={styles.qaIcon} style={{ background:"#fef9c3" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#854d0e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -168,30 +156,9 @@ export default function DashboardAdmin() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </a>
           </div>
-
-          {/* Aktivitas Terbaru */}
-          <div className={styles.sectionTitle} style={{ marginTop:28 }}>Aktivitas Terbaru</div>
-          <div className={styles.aktivitasList}>
-            {AKTIVITAS.map((a) => {
-              const c = AKTIVITAS_COLOR[a.tipe] ?? { bg:"#f1f5f9", color:"#475569" };
-              return (
-                <div key={a.id} className={styles.aktivitasItem}>
-                  <div className={styles.aktivitasIcon} style={{ background: c.bg, color: c.color }}>
-                    <AktivitasIcon tipe={a.tipe} />
-                  </div>
-                  <div className={styles.aktivitasInfo}>
-                    <span className={styles.aktivitasAksi}>{a.aksi}</span>
-                    <span className={styles.aktivitasWaktu}>{a.waktu}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
         </div>
       </div>
 
-      {/* Logout Modal */}
       {showLogout && (
         <div className={styles.modalOverlay} onClick={() => setShowLogout(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
