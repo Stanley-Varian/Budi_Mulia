@@ -164,7 +164,7 @@ function generateJadwal(
 
 // ── Warna mapel ──────────────────────────────────────────────────────────────
 const WARNA_MAPEL: Record<string, { bg: string; text: string }> = {
-  Matematika: { bg: "#dbeafe", text: "#1e40af" },
+  Matematika_Wajib: { bg: "#dbeafe", text: "#1e40af" },
   "Bahasa Indonesia": { bg: "#fce7f3", text: "#9d174d" },
   "Bahasa Inggris": { bg: "#d1fae5", text: "#065f46" },
   Fisika: { bg: "#fef9c3", text: "#854d0e" },
@@ -176,7 +176,13 @@ const WARNA_MAPEL: Record<string, { bg: string; text: string }> = {
   Agama: { bg: "#fff7ed", text: "#9a3412" },
   PKN: { bg: "#e0f2fe", text: "#0369a1" },
   BK: { bg: "#f1f5f9", text: "#475569" },
+  Informatika: { bg: "#cffafe", text: "#155e75" }, 
+  Sosiologi: { bg: "#f8fafc", text: "#334155" }, 
+  Geografi: { bg: "#d1fae5", text: "#047857" }, 
+  Kewalian: { bg: "#eef2ff", text: "#4338ca" }, 
+  "Seni Budaya": { bg: "#fef3c7", text: "#b45309" }, 
 };
+
 
 function getWarna(mapel: string) {
   return WARNA_MAPEL[mapel] ?? { bg: "#f8fafc", text: "#374151" };
@@ -263,11 +269,11 @@ export default function GenerateJadwal() {
   // Step 1
   const [kelasList, setKelasList] = useState<KelasConfig[]>([]);
   const [hariConfig, setHariConfig] = useState<HariConfig[]>([
-    { hari: "Senin",  maxJamSiswa: 11, maxJamGuru: 6 },
-    { hari: "Selasa", maxJamSiswa: 11, maxJamGuru: 6 },
-    { hari: "Rabu",   maxJamSiswa: 11, maxJamGuru: 6 },
+    { hari: "Senin",  maxJamSiswa: 12, maxJamGuru: 6 },
+    { hari: "Selasa", maxJamSiswa: 12, maxJamGuru: 6 },
+    { hari: "Rabu",   maxJamSiswa: 12, maxJamGuru: 6 },
     { hari: "Kamis",  maxJamSiswa: 11, maxJamGuru: 6 },
-    { hari: "Jumat",  maxJamSiswa: 8,  maxJamGuru: 4 },
+    { hari: "Jumat",  maxJamSiswa: 10,  maxJamGuru: 6 },
   ]);
   const [newKelas, setNewKelas] = useState("");
 
