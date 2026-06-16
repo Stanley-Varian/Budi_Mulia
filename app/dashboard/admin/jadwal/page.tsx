@@ -164,7 +164,7 @@ function generateJadwal(
 
 // ── Warna mapel ──────────────────────────────────────────────────────────────
 const WARNA_MAPEL: Record<string, { bg: string; text: string }> = {
-  Matematika_Wajib: { bg: "#dbeafe", text: "#1e40af" },
+  "Matematika Wajib": { bg: "#dbeafe", text: "#1e40af" },
   "Bahasa Indonesia": { bg: "#fce7f3", text: "#9d174d" },
   "Bahasa Inggris": { bg: "#d1fae5", text: "#065f46" },
   Fisika: { bg: "#fef9c3", text: "#854d0e" },
