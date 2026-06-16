@@ -116,11 +116,24 @@ export const getEkskul = async () => {
   return data.data;
 };
 
-export async function leaveKelas(id: string | number) {
-  const res = await fetch(`/api/kelas/${id}/leave`, {
-    method: "DELETE", // atau POST tergantung backend kamu
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) throw new Error("Gagal keluar kelas");
-  return res.json();
-};
+export async function leaveKelas(id: string) {
+  const token = getToken();
+
+  const res = await fetch(
+    `${BASE_URL}/api/siswa/kelas/${id}/leave`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message);
+  }
+
+  return data;
+}

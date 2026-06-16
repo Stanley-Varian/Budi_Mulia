@@ -327,7 +327,7 @@ export default function DashboardSiswa() {
     setLeaveLoading(true);
     setLeaveError(null);
     try {
-      await leaveKelas(leaveTarget.id);
+      await leaveKelas(String(leaveTarget.id));
       setShowLeave(false);
       setLeaveTarget(null);
       reloadMapel();

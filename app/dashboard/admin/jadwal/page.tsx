@@ -127,7 +127,7 @@ function generateJadwal(
       const maxJamSiswa = maxJamSiswaMap[hari] ?? 11;
       const maxJamGuru = maxJamGuruMap[hari] ?? 8;
 
-      // Cek apakah guru masih bisa ngajar di hari ini (limit harian)
+
       const jamGuruHariIni = guruJamPerHari[hari][tugas.guru] ?? 0;
       if (jamGuruHariIni + tugas.panjang > maxJamGuru) continue;
 
@@ -162,7 +162,7 @@ function generateJadwal(
   return { hasil: jadwal, konflik };
 }
 
-// ── Warna mapel ──────────────────────────────────────────────────────────────
+
 const WARNA_MAPEL: Record<string, { bg: string; text: string }> = {
   "Matematika Wajib": { bg: "#dbeafe", text: "#1e40af" },
   "Bahasa Indonesia": { bg: "#fce7f3", text: "#9d174d" },
@@ -266,7 +266,7 @@ export default function GenerateJadwal() {
   const [saveModal, setSaveModal] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Step 1
+
   const [kelasList, setKelasList] = useState<KelasConfig[]>([]);
   const [hariConfig, setHariConfig] = useState<HariConfig[]>([
     { hari: "Senin",  maxJamSiswa: 12, maxJamGuru: 6 },
@@ -277,7 +277,7 @@ export default function GenerateJadwal() {
   ]);
   const [newKelas, setNewKelas] = useState("");
 
-  // Step 2
+
   const [mapelList, setMapelList] = useState<MapelConfig[]>([]);
   const [newMapel, setNewMapel] = useState("");
   const [newGuru, setNewGuru] = useState("");
@@ -301,7 +301,7 @@ export default function GenerateJadwal() {
   const totalMenitPerKelas = (m: MapelConfig) =>
     m.pertemuanPerMinggu * m.jamPerPertemuan * durasi;
 
-  // Helper update hariConfig
+
   const updateHari = (hari: Hari, field: "maxJamSiswa" | "maxJamGuru", delta: number) => {
     setHariConfig(hariConfig.map((hc) => {
       if (hc.hari !== hari) return hc;
@@ -386,7 +386,7 @@ export default function GenerateJadwal() {
             ))}
           </div>
 
-          {/* ── STEP 1 ── */}
+  
           {step === 1 && (
             <div className={styles.stepContent}>
               <div className={styles.stepGrid}>
@@ -400,7 +400,7 @@ export default function GenerateJadwal() {
                   </div>
                 </div>
 
-                {/* Max jam per hari — DIPISAH SISWA & GURU */}
+
                 <div className={styles.card}>
                   <div className={styles.cardTitle}>Batas Jam Per Hari</div>
                   <div className={styles.cardDesc}>
@@ -500,7 +500,7 @@ export default function GenerateJadwal() {
             </div>
           )}
 
-          {/* ── STEP 2 ── */}
+
           {step === 2 && (
             <div className={styles.stepContent}>
               <div className={styles.card}>
@@ -532,7 +532,7 @@ export default function GenerateJadwal() {
                               {m.namaMapel}
                             </div>
                           </td>
-                          {/* Nama guru → uppercase di display */}
+
                           <td className={styles.mtd} style={{ fontWeight: 600, letterSpacing: "0.03em" }}>{m.namaGuru}</td>
                           <td className={styles.mtd}>
                             <div className={styles.jamControl}>
@@ -565,7 +565,7 @@ export default function GenerateJadwal() {
                   </table>
                 </div>
 
-                {/* Tambah mapel — guru input auto uppercase */}
+
                 <div className={styles.addMapelRow}>
                   <input className={styles.addInput} placeholder="Nama mata pelajaran" value={newMapel} onChange={(e) => setNewMapel(e.target.value)} />
                   <input
@@ -630,7 +630,7 @@ export default function GenerateJadwal() {
             </div>
           )}
 
-          {/* ── STEP 3 ── */}
+
           {step === 3 && hasil && (
             <div className={styles.stepContent}>
               {konflikList.length > 0 ? (
@@ -656,7 +656,7 @@ export default function GenerateJadwal() {
                 </div>
               )}
 
-              {/* Filter */}
+
               <div className={styles.filterWrap}>
                 <div className={styles.filterGroup}>
                   <span className={styles.filterLabel}>Kelas:</span>
@@ -680,7 +680,7 @@ export default function GenerateJadwal() {
                 </div>
               </div>
 
-              {/* Tabel hasil */}
+
               <div className={styles.hasilTableWrap}>
                 <table className={styles.hasilTable}>
                   <thead>
@@ -778,7 +778,7 @@ export default function GenerateJadwal() {
         </div>
       </div>
 
-      {/* Modal Logout */}
+
       {showLogout && (
         <div className={styles.modalOverlay} onClick={() => setShowLogout(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -799,7 +799,7 @@ export default function GenerateJadwal() {
         </div>
       )}
 
-      {/* Modal Save Result */}
+
       {saveModal && (
         <div className={styles.modalOverlay} onClick={() => setSaveModal(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
