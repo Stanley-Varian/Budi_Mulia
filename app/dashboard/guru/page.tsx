@@ -23,14 +23,6 @@ type Kelas = {
   updatedAt: string;
 };
 
-
-function getMapelMeta(mapel: string) {
-  return MAPEL_META[mapel] ?? { warna: "#f1f5f9", icon: "book" };
-}
-
-const MAPEL_OPTIONS = Object.keys(MAPEL_META);
-
-
 const MAPEL_META: Record<string, { warna: string; icon: string }> = {
   "Matematika":       { warna: "#dbeafe", icon: "math"  },
   "Bahasa Indonesia": { warna: "#fce7f3", icon: "book"  },
@@ -75,7 +67,6 @@ function MapelIcon({ icon }: { icon: string }) {
   }
 }
 
-// ── Komponen Copy Kode ────────────────────────────────────────────────────────
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
@@ -105,28 +96,17 @@ export default function DashboardGuru() {
   const [expanded, setExpanded]     = useState(false);
   const [showLogout, setShowLogout] = useState(false);
   const [activeTab, setActiveTab]   = useState(1);
-
   const [kelasList, setKelasList]   = useState<Kelas[]>([]);
   const [loading, setLoading]       = useState(true);
-
-
-  // Form tambah kelas
   const [showForm, setShowForm]     = useState(false);
   const [fMapel, setFMapel]         = useState(MAPEL_OPTIONS[0]);
   const [fKelas, setFKelas]         = useState(KELAS_OPTIONS[0]);
   const [fKode, setFKode]           = useState("");
   const [fError, setFError]         = useState("");
   const [saving, setSaving]         = useState(false);
-
-      return;
-    }
-    setSaving(true);
-    setFError("");
-    setShowForm(false);
-  // ── BARU: Modal info kelas (tombol ⓘ) ────────────────────────────────────
-  const [infoKelas, setInfoKelas]       = useState<Kelas | null>(null);
-  const [showHapus, setShowHapus]       = useState(false); // konfirmasi hapus
-  const [deleting, setDeleting]         = useState(false);
+  const [infoKelas, setInfoKelas]   = useState<Kelas | null>(null);
+  const [showHapus, setShowHapus]   = useState(false);
+  const [deleting, setDeleting]     = useState(false);
 
   useEffect(() => {
     const fetchKelas = async () => {
@@ -158,7 +138,6 @@ export default function DashboardGuru() {
     finally { setSaving(false); }
   };
 
-  // ── Hapus / Keluar kelas ──────────────────────────────────────────────────
   const handleHapusKelas = async () => {
     if (!infoKelas) return;
     setDeleting(true);
@@ -175,13 +154,10 @@ export default function DashboardGuru() {
       }
     } catch { /* silent */ }
     finally { setDeleting(false); }
-
   };
 
   return (
     <div className={styles.layout}>
-
-      {/* Sidebar */}
       <aside className={`${styles.sidebar} ${expanded ? styles.sidebarExpanded : ""}`}>
         <button className={styles.hamburger} onClick={() => setExpanded(!expanded)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -208,10 +184,7 @@ export default function DashboardGuru() {
       </aside>
       {expanded && <div className={styles.overlay} onClick={() => setExpanded(false)} />}
 
-      {/* Main */}
       <div className={`${styles.main} ${expanded ? styles.mainShifted : ""}`}>
-
-        {/* Topbar */}
         <header className={styles.topbar}>
           <div className={styles.tabs}>
             {TABS.map((tab, i) => (
@@ -237,7 +210,6 @@ export default function DashboardGuru() {
           </div>
         </header>
 
-        {/* Grid Kelas */}
         <div className={styles.content}>
           {loading ? (
             <p style={{ color: "#64748b", padding: "2rem", textAlign: "center" }}>Memuat kelas...</p>
@@ -250,42 +222,20 @@ export default function DashboardGuru() {
               {kelasList.map((kelas) => {
                 const meta = getMapelMeta(kelas.mapel);
                 return (
-                  <a
-                    key={kelas._id}
-                    href={`/dashboard/guru/materi/${kelas._id}`}
-                    className={styles.card}
-                  >
+                  <a key={kelas._id} href={`/dashboard/guru/materi/${kelas._id}`} className={styles.card}>
                     <div className={styles.cardTop} style={{ background: meta.warna }}>
                       <div className={styles.cardIconWrap}>
                         <MapelIcon icon={meta.icon} />
                       </div>
                       <div className={styles.cardActions}>
-                        {/* Tombol Upload */}
-                        <button
-                          className={styles.cardBtn}
-                          title="Upload Materi"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            router.push(`/dashboard/guru/materi/${kelas._id}`);
-                          }}
-                        >
+                        <button className={styles.cardBtn} title="Upload Materi" onClick={(e) => { e.preventDefault(); router.push(`/dashboard/guru/materi/${kelas._id}`); }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                             <polyline points="17 8 12 3 7 8"/>
                             <line x1="12" y1="3" x2="12" y2="15"/>
                           </svg>
                         </button>
-
-                        {/* ── TOMBOL ⓘ → buka modal info + keluar kelas ── */}
-                        <button
-                          className={styles.cardBtn}
-                          title="Info & Keluar Kelas"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setInfoKelas(kelas);
-                          }}
-                        >
+                        <button className={styles.cardBtn} title="Info & Keluar Kelas" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setInfoKelas(kelas); }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"/>
                             <line x1="12" y1="8" x2="12" y2="12"/>
@@ -294,7 +244,6 @@ export default function DashboardGuru() {
                         </button>
                       </div>
                     </div>
-
                     <div className={styles.cardBottom}>
                       <div className={styles.cardInfo}>
                         <span className={styles.cardMapel}>{kelas.mapel}</span>
@@ -320,7 +269,6 @@ export default function DashboardGuru() {
           )}
         </div>
 
-        {/* FAB */}
         <button className={styles.fab} onClick={() => setShowForm(true)} title="Tambah Kelas">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -328,7 +276,7 @@ export default function DashboardGuru() {
         </button>
       </div>
 
-      {/* ── Modal Tambah Kelas ── */}
+      {/* Modal Tambah Kelas */}
       {showForm && (
         <div className={styles.modalOverlay} onClick={() => setShowForm(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -353,18 +301,9 @@ export default function DashboardGuru() {
               </select>
             </div>
             <div className={styles.formGroup}>
-              <input
-                className={styles.formInput}
-                type="text"
-                placeholder="contoh: MTK10A"
-                value={fKode}
-                onChange={(e) => setFKode(e.target.value)}
-              />
-
               <label className={styles.formLabel}>Kode Kelas</label>
               <input className={styles.formInput} type="text" placeholder="contoh: MTK10A"
                 value={fKode} onChange={(e) => setFKode(e.target.value)} />
-
             </div>
             {fError && <p className={styles.formError}>{fError}</p>}
             <div className={styles.modalActions}>
@@ -377,12 +316,10 @@ export default function DashboardGuru() {
         </div>
       )}
 
-      {/* ── Modal Info Kelas (dari tombol ⓘ) ── */}
+      {/* Modal Info Kelas */}
       {infoKelas && !showHapus && (
         <div className={styles.modalOverlay} onClick={() => setInfoKelas(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-
-            {/* Header modal */}
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Info Kelas</h3>
               <button className={styles.closeBtn} onClick={() => setInfoKelas(null)}>
@@ -391,8 +328,6 @@ export default function DashboardGuru() {
                 </svg>
               </button>
             </div>
-
-            {/* Badge mapel + kelas */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
               <div style={{
                 width: 44, height: 44, borderRadius: 12,
@@ -407,70 +342,33 @@ export default function DashboardGuru() {
                 <div style={{ fontSize: 13, color: "#64748b" }}>Kelas {infoKelas.nama}</div>
               </div>
             </div>
-
-            {/* Info rows */}
-            <div style={{
-              background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0",
-              overflow: "hidden", marginBottom: 20,
-            }}>
+            <div style={{ background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0", overflow: "hidden", marginBottom: 20 }}>
               {[
-                { label: "Guru",         value: infoKelas.namaGuru },
+                { label: "Guru",           value: infoKelas.namaGuru },
                 { label: "Mata Pelajaran", value: infoKelas.mapel },
-                { label: "Kelas",        value: infoKelas.nama },
-                { label: "Jumlah Siswa", value: `${infoKelas.anggota.length} siswa` },
-                { label: "Dibuat",       value: new Date(infoKelas.createdAt).toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" }) },
+                { label: "Kelas",          value: infoKelas.nama },
+                { label: "Jumlah Siswa",   value: `${infoKelas.anggota.length} siswa` },
+                { label: "Dibuat",         value: new Date(infoKelas.createdAt).toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" }) },
               ].map((row, i) => (
-                <div key={i} style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  padding: "10px 14px",
-                  borderBottom: i < 4 ? "1px solid #e2e8f0" : "none",
-                }}>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderBottom: i < 4 ? "1px solid #e2e8f0" : "none" }}>
                   <span style={{ fontSize: 13, color: "#64748b" }}>{row.label}</span>
                   <span style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>{row.value}</span>
                 </div>
               ))}
             </div>
-
-            {/* Kode kelas + salin */}
-            <div style={{
-              background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10,
-              padding: "12px 14px", marginBottom: 20,
-            }}>
-              <div style={{ fontSize: 12, color: "#0369a1", fontWeight: 600, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Kode Bergabung
-              </div>
+            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: "12px 14px", marginBottom: 20 }}>
+              <div style={{ fontSize: 12, color: "#0369a1", fontWeight: 600, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Kode Bergabung</div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                <span style={{
-                  fontSize: 22, fontWeight: 800, letterSpacing: "0.2em",
-                  color: "#0c4a6e", fontFamily: "monospace",
-                }}>
-                  {infoKelas.kodeKelas}
-                </span>
+                <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: "0.2em", color: "#0c4a6e", fontFamily: "monospace" }}>{infoKelas.kodeKelas}</span>
                 <CopyButton text={infoKelas.kodeKelas} />
               </div>
-              <div style={{ fontSize: 11, color: "#0369a1", marginTop: 6 }}>
-                Bagikan kode ini ke siswa untuk bergabung ke kelas.
-              </div>
+              <div style={{ fontSize: 11, color: "#0369a1", marginTop: 6 }}>Bagikan kode ini ke siswa untuk bergabung ke kelas.</div>
             </div>
-
-            {/* Tombol Hapus / Keluar Kelas */}
             <button
               onClick={() => setShowHapus(true)}
-              style={{
-                width: "100%", padding: "11px 0", borderRadius: 10,
-                border: "1.5px solid #fecaca", background: "#fff5f5",
-                color: "#dc2626", fontSize: 14, fontWeight: 600,
-                cursor: "pointer", display: "flex", alignItems: "center",
-                justifyContent: "center", gap: 8, transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#fee2e2";
-                e.currentTarget.style.borderColor = "#f87171";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#fff5f5";
-                e.currentTarget.style.borderColor = "#fecaca";
-              }}
+              style={{ width: "100%", padding: "11px 0", borderRadius: 10, border: "1.5px solid #fecaca", background: "#fff5f5", color: "#dc2626", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.borderColor = "#f87171"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff5f5"; e.currentTarget.style.borderColor = "#fecaca"; }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -483,38 +381,25 @@ export default function DashboardGuru() {
         </div>
       )}
 
-      {/* ── Modal Konfirmasi Hapus Kelas ── */}
+      {/* Modal Konfirmasi Hapus */}
       {showHapus && infoKelas && (
         <div className={styles.modalOverlay} onClick={() => setShowHapus(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div style={{ textAlign: "center", marginBottom: 16 }}>
-              {/* Ikon peringatan */}
-              <div style={{
-                width: 52, height: 52, borderRadius: "50%",
-                background: "#fee2e2", display: "flex", alignItems: "center",
-                justifyContent: "center", margin: "0 auto 12px",
-              }}>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                   <line x1="12" y1="9" x2="12" y2="13"/>
                   <line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: "0 0 6px" }}>
-                Hapus Kelas Ini?
-              </h3>
+              <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: "0 0 6px" }}>Hapus Kelas Ini?</h3>
               <p style={{ fontSize: 13, color: "#64748b", margin: 0, lineHeight: 1.5 }}>
                 Kelas <strong>{infoKelas.mapel} — {infoKelas.nama}</strong> akan dihapus permanen.<br/>
                 Semua data siswa dan materi di kelas ini ikut terhapus.
               </p>
             </div>
-
-            {/* Kotak peringatan merah */}
-            <div style={{
-              background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8,
-              padding: "10px 14px", marginBottom: 20,
-              display: "flex", alignItems: "flex-start", gap: 8,
-            }}>
+            <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", marginBottom: 20, display: "flex", alignItems: "flex-start", gap: 8 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}>
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
@@ -522,36 +407,17 @@ export default function DashboardGuru() {
                 Tindakan ini tidak bisa dibatalkan. Kode <strong>{infoKelas.kodeKelas}</strong> akan hangus dan siswa tidak bisa menggunakannya lagi.
               </span>
             </div>
-
             <div className={styles.modalActions}>
-              <button
-                className={styles.cancelBtn}
-                onClick={() => setShowHapus(false)}
-                disabled={deleting}
-              >
-                Batal, Kembali
-              </button>
-              <button
-                onClick={handleHapusKelas}
-                disabled={deleting}
-                style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: "none",
-                  background: deleting ? "#f87171" : "#dc2626", color: "white",
-                  fontSize: 14, fontWeight: 600, cursor: deleting ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}
-              >
-                {deleting ? "Menghapus..." : (
-                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Ya, Hapus Kelas</>
-                )}
-
+              <button className={styles.cancelBtn} onClick={() => setShowHapus(false)} disabled={deleting}>Batal, Kembali</button>
+              <button onClick={handleHapusKelas} disabled={deleting} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: deleting ? "#f87171" : "#dc2626", color: "white", fontSize: 14, fontWeight: 600, cursor: deleting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                {deleting ? "Menghapus..." : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Ya, Hapus Kelas</>}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Modal Logout ── */}
+      {/* Modal Logout */}
       {showLogout && (
         <div className={styles.modalOverlay} onClick={() => setShowLogout(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
