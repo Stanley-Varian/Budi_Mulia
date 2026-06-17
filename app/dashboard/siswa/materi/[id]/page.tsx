@@ -41,6 +41,36 @@ function NavNotifIcon({ unreadCount }: { unreadCount: number }) {
   );
 }
 
+function TipeIcon({ tipe }: { tipe: string }) {
+  if (tipe === "pdf") return (
+    <div style={{ width: 46, height: 46, borderRadius: 12, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>
+  );
+  if (tipe === "video") return (
+    <div style={{ width: 46, height: 46, borderRadius: 12, background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+    </div>
+  );
+  if (tipe === "link") return (
+    <div style={{ width: 46, height: 46, borderRadius: 12, background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    </div>
+  );
+  return (
+    <div style={{ width: 46, height: 46, borderRadius: 12, background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+  );
+}
+
+const TIPE_CHIP: Record<string, { bg: string; color: string; label: string }> = {
+  pdf:   { bg: "#fef2f2", color: "#ef4444", label: "PDF" },
+  video: { bg: "#eff6ff", color: "#3b82f6", label: "Video" },
+  link:  { bg: "#f5f3ff", color: "#8b5cf6", label: "Link" },
+  doc:   { bg: "#eff6ff", color: "#2563eb", label: "Doc" },
+};
+
 const NAV_KEYS = ["dashboard", "jadwal", "pengumuman", "pengaturan"] as const;
 const NAV_HREFS = ["/dashboard/siswa", "/dashboard/siswa/jadwal", "/dashboard/siswa/pengumuman", "/dashboard/siswa/settings"];
 
@@ -55,6 +85,7 @@ export default function MateriSiswa({ params }: { params: { id: string } }) {
   const [data, setData] = useState<DataMapel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   const NAV_ICONS = [
     <svg key="d" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>,
@@ -72,8 +103,26 @@ export default function MateriSiswa({ params }: { params: { id: string } }) {
       .finally(() => setLoading(false));
   }, [params.id]);
 
+  const handleShare = (item: Materi) => {
+    if (navigator.share) {
+      navigator.share({ title: item.judul, url: item.url });
+    } else {
+      navigator.clipboard.writeText(item.url).then(() => {
+        setCopied(item.id);
+        setTimeout(() => setCopied(null), 2000);
+      });
+    }
+  };
+
   const pertemuanList = data ? [...new Set(data.list.map((m) => m.pertemuan))].sort((a, b) => a - b) : [];
   const filtered = !data ? [] : filterPertemuan === "semua" ? data.list : data.list.filter((m) => m.pertemuan === filterPertemuan);
+
+  const iconBtnStyle = (bg: string, color: string): React.CSSProperties => ({
+    width: 34, height: 34, borderRadius: 9, display: "flex",
+    alignItems: "center", justifyContent: "center",
+    background: bg, color, border: "none", cursor: "pointer",
+    textDecoration: "none", flexShrink: 0, transition: "opacity .15s",
+  });
 
   return (
     <div className={styles.layout}>
@@ -137,73 +186,79 @@ export default function MateriSiswa({ params }: { params: { id: string } }) {
                 <div className={styles.emptyWrap}>{t("materi.belumAda")}</div>
               ) : (
                 <div className={styles.materiList}>
-                  {filtered.map((item) => (
-                    <div key={item.id} className={styles.materiCard}>
-                      <div className={styles.materiIcon}>
-                        {item.tipe === "pdf" && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
-                        {item.tipe === "video" && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>}
-                        {item.tipe === "link" && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>}
-                        {item.tipe === "doc" && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>}
-                      </div>
-                      <div className={styles.materiBody}>
-                        <div className={styles.materiJudul}>{item.judul}</div>
-                        {item.deskripsi && <div className={styles.materiDesc}>{item.deskripsi}</div>}
-                        <div className={styles.materiMeta}>
-                          <span>{t("materi.pertemuan")} {item.pertemuan}</span>
-                          {item.ukuran && <span>{item.ukuran}</span>}
-                          <span>{new Date(item.tanggal).toLocaleDateString("id-ID")}</span>
+                  {filtered.map((item) => {
+                    const chip = TIPE_CHIP[item.tipe] ?? TIPE_CHIP.doc;
+                    return (
+                      <div key={item.id} className={styles.materiCard}>
+                        <TipeIcon tipe={item.tipe} />
+                        <div className={styles.materiBody}>
+                          <div className={styles.materiTop}>
+                            <span className={styles.tipeChip} style={{ background: chip.bg, color: chip.color }}>{chip.label}</span>
+                            <span className={styles.pertemuanChip}>{t("materi.pertemuan")} {item.pertemuan}</span>
+                          </div>
+                          <div className={styles.materiJudul}>{item.judul}</div>
+                          {item.deskripsi && <div className={styles.materiDeskripsi}>{item.deskripsi}</div>}
+                          <div className={styles.materiFoot}>
+                            {item.ukuran && <span className={styles.materiUkuran}>{item.ukuran}</span>}
+                            <span className={styles.materiTanggal}>{new Date(item.tanggal).toLocaleDateString("id-ID")}</span>
+                          </div>
                         </div>
-                        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                          {item.tipe === "link" ? (
+
+                        {/* Icon buttons */}
+                        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                          {/* Buka */}
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={iconBtnStyle("#ecfdf5", "#059669")}
+                            title="Buka"
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                              <polyline points="15 3 21 3 21 9"/>
+                              <line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                          </a>
+
+                          {/* Download — sembunyikan untuk link */}
+                          {item.tipe !== "link" && (
                             <a
                               href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: "inline-flex", alignItems: "center", gap: 4,
-                                fontSize: 12, fontWeight: 500, color: "#4f46e5",
-                                background: "#eef2ff", borderRadius: 6,
-                                padding: "5px 10px", textDecoration: "none",
-                              }}>
-                            
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                              Buka Link
+                              download
+                              style={iconBtnStyle("#fef9c3", "#ca8a04")}
+                              title="Download"
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                              </svg>
                             </a>
-                          ) : (
-                            <>
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: "inline-flex", alignItems: "center", gap: 4,
-                                  fontSize: 12, fontWeight: 500, color: "#4f46e5",
-                                  background: "#eef2ff", borderRadius: 6,
-                                  padding: "5px 10px", textDecoration: "none",
-                                }}
-                              >
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                Lihat
-                              </a>
-                              <a
-                                href={item.url}
-                                download
-                                style={{
-                                  display: "inline-flex", alignItems: "center", gap: 4,
-                                  fontSize: 12, fontWeight: 500, color: "#059669",
-                                  background: "#ecfdf5", borderRadius: 6,
-                                  padding: "5px 10px", textDecoration: "none",
-                                }}
-                              >
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                Download
-                              </a>
-                            </>
                           )}
+
+                          {/* Share */}
+                          <button
+                            onClick={() => handleShare(item)}
+                            style={iconBtnStyle(copied === item.id ? "#f0fdf4" : "#ede9fe", copied === item.id ? "#16a34a" : "#7c3aed")}
+                            title={copied === item.id ? "Link disalin!" : "Bagikan"}
+                          >
+                            {copied === item.id ? (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            ) : (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                              </svg>
+                            )}
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>

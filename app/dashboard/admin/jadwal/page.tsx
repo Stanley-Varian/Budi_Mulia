@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import styles from "./generate-jadwal.module.css";
 import { saveJadwal } from "@/lib/api/admin";
 
-// ── Tipe ────────────────────────────────────────────────────────────────────
 type Hari = "Senin" | "Selasa" | "Rabu" | "Kamis" | "Jumat";
 
 type KelasConfig = {
@@ -18,13 +17,14 @@ type MapelConfig = {
   id: string;
   namaMapel: string;
   namaGuru: string;
-  pertemuanPerMinggu: number; // berapa kali pertemuan per minggu per kelas
-  jamPerPertemuan: number; // berapa jam pelajaran per pertemuan (konsekutif)
+  pertemuanPerMinggu: number;
+  jamPerPertemuan: number;
 };
 
 type HariConfig = {
   hari: Hari;
-  maxJam: number;
+  maxJamSiswa: number;
+  maxJamGuru: number;
 };
 
 type SlotJadwal = {
@@ -36,41 +36,52 @@ type HasilJadwal = {
   [hari: string]: { [jam: number]: { [kelas: string]: SlotJadwal } };
 };
 
-// ── Konstanta ────────────────────────────────────────────────────────────────
 const HARI_LIST: Hari[] = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
-const JAM_SLOTS = [1, 2, 3, 4, "IST", 5, 6, 7, 8, "IST", 9, 10, 11] as const;
+const JAM_SLOTS = [
+  "DOA",
+  1,
+  2,
+  3,
+  4,
+  "IST1",
+  5,
+  6,
+  7,
+  8,
+  "IST2",
+  9,
+  10,
+  11,
+  12,
+] as const;
 const JAM_WAKTU = [
+  "06.30 - 06.45",
   "06.45",
   "07.30",
   "08.15",
   "09.00",
-  "",
-  "09.45",
-  "10.30",
-  "11.15",
-  "12.00",
-  "",
+  "09.00 - 09.20",
+  "09.20",
+  "10.05",
+  "10.50",
+  "11.35",
+  "12.20 - 12.45",
   "12.45",
   "13.30",
   "14.15",
+  "15.00",
 ];
 
-// Jam real (bukan istirahat), berurutan
-const JAM_REAL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const JAM_REAL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-// Cek apakah jam j dan j+n-1 semua konsekutif (tidak melintasi istirahat)
-// Istirahat ada setelah jam 4 (5 langsung) dan setelah jam 8 (9 langsung)
-// Jadi blok konsekutif yang boleh: 1-4, 5-8, 9-11
 function isKonsekutif(startJam: number, panjang: number): boolean {
   const end = startJam + panjang - 1;
-  // Tidak boleh melewati batas istirahat
   if (startJam <= 4 && end > 4) return false;
   if (startJam <= 8 && end > 8) return false;
-  if (end > 11) return false;
+  if (end > 12) return false;
   return true;
 }
 
-// ── Algoritma generate jadwal ────────────────────────────────────────────────
 function generateJadwal(
   kelasList: KelasConfig[],
   mapelList: MapelConfig[],
@@ -79,7 +90,6 @@ function generateJadwal(
   const aktifKelas = kelasList.filter((k) => k.aktif).map((k) => k.nama);
   const konflik: string[] = [];
 
-  // Inisialisasi jadwal
   const jadwal: HasilJadwal = {};
   HARI_LIST.forEach((h) => {
     jadwal[h] = {};
@@ -91,22 +101,23 @@ function generateJadwal(
     });
   });
 
-  // Tracking guru busy: guruBusy[hari][jam] = Set<namaGuru>
   const guruBusy: Record<string, Record<number, Set<string>>> = {};
+
+  const guruJamPerHari: Record<string, Record<string, number>> = {};
+
   HARI_LIST.forEach((h) => {
     guruBusy[h] = {};
+    guruJamPerHari[h] = {};
     JAM_REAL.forEach((j) => {
       guruBusy[h][j] = new Set();
     });
   });
 
-  // Buat daftar tugas: setiap mapel × kelas × pertemuan
-  // Tiap tugas = 1 blok pertemuan (jamPerPertemuan jam konsekutif)
   type Tugas = {
     mapel: string;
     guru: string;
     kelas: string;
-    panjang: number; // jamPerPertemuan
+    panjang: number;
   };
 
   const tugasList: Tugas[] = [];
@@ -123,32 +134,33 @@ function generateJadwal(
     });
   });
 
-  // Shuffle tugas untuk variasi
   for (let i = tugasList.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [tugasList[i], tugasList[j]] = [tugasList[j], tugasList[i]];
   }
 
-  const maxJamMap: Record<string, number> = {};
+  const maxJamSiswaMap: Record<string, number> = {};
+  const maxJamGuruMap: Record<string, number> = {};
   hariConfig.forEach((h) => {
-    maxJamMap[h.hari] = h.maxJam;
+    maxJamSiswaMap[h.hari] = h.maxJamSiswa;
+    maxJamGuruMap[h.hari] = h.maxJamGuru;
   });
 
-  // Assign tiap tugas ke blok konsekutif
   tugasList.forEach((tugas) => {
     let assigned = false;
 
     for (const hari of HARI_LIST) {
       if (assigned) break;
-      const maxJ = maxJamMap[hari] ?? 11;
+      const maxJamSiswa = maxJamSiswaMap[hari] ?? 11;
+      const maxJamGuru = maxJamGuruMap[hari] ?? 8;
 
-      // Cari slot awal yang memungkinkan blok konsekutif
-      for (let startJam = 1; startJam <= maxJ && !assigned; startJam++) {
-        // Cek apakah blok startJam..startJam+panjang-1 valid
+      const jamGuruHariIni = guruJamPerHari[hari][tugas.guru] ?? 0;
+      if (jamGuruHariIni + tugas.panjang > maxJamGuru) continue;
+
+      for (let startJam = 1; startJam <= maxJamSiswa && !assigned; startJam++) {
         if (!isKonsekutif(startJam, tugas.panjang)) continue;
-        if (startJam + tugas.panjang - 1 > maxJ) continue;
+        if (startJam + tugas.panjang - 1 > maxJamSiswa) continue;
 
-        // Cek semua jam dalam blok: guru tidak busy & kelas tidak busy
         let bisaAssign = true;
         for (let j = startJam; j < startJam + tugas.panjang; j++) {
           if (guruBusy[hari][j]?.has(tugas.guru)) {
@@ -162,7 +174,6 @@ function generateJadwal(
         }
 
         if (bisaAssign) {
-          // Assign blok
           for (let j = startJam; j < startJam + tugas.panjang; j++) {
             jadwal[hari][j][tugas.kelas] = {
               mapel: tugas.mapel,
@@ -170,6 +181,7 @@ function generateJadwal(
             };
             guruBusy[hari][j].add(tugas.guru);
           }
+          guruJamPerHari[hari][tugas.guru] = jamGuruHariIni + tugas.panjang;
           assigned = true;
         }
       }
@@ -185,9 +197,47 @@ function generateJadwal(
   return { hasil: jadwal, konflik };
 }
 
-// ── Warna mapel ──────────────────────────────────────────────────────────────
+function compactJadwal(hasil: HasilJadwal): HasilJadwal {
+  const compacted: HasilJadwal = {};
+
+  Object.keys(hasil).forEach((hari) => {
+    compacted[hari] = {};
+    JAM_REAL.forEach((j) => {
+      compacted[hari][j] = {};
+    });
+
+    const kelasList = Object.keys(hasil[hari][JAM_REAL[0]] ?? {});
+
+    kelasList.forEach((kelas) => {
+      const terisi: Array<{ mapel: string; guru: string } | null> = [];
+      JAM_REAL.forEach((j) => {
+        const cell = hasil[hari][j]?.[kelas];
+        if (cell !== null && cell !== undefined) terisi.push(cell);
+      });
+
+      JAM_REAL.forEach((j) => {
+        compacted[hari][j][kelas] = null;
+      });
+
+      const blok1 = JAM_REAL.filter((j) => j <= 4);
+      const blok2 = JAM_REAL.filter((j) => j >= 5 && j <= 8);
+      const blok3 = JAM_REAL.filter((j) => j >= 9 && j <= 12);
+
+      let idx = 0;
+      [...blok1, ...blok2, ...blok3].forEach((j) => {
+        if (idx < terisi.length) {
+          compacted[hari][j][kelas] = terisi[idx];
+          idx++;
+        }
+      });
+    });
+  });
+
+  return compacted;
+}
+
 const WARNA_MAPEL: Record<string, { bg: string; text: string }> = {
-  Matematika: { bg: "#dbeafe", text: "#1e40af" },
+  "Matematika_Wajib": { bg: "#dbeafe", text: "#1e40af" },
   "Bahasa Indonesia": { bg: "#fce7f3", text: "#9d174d" },
   "Bahasa Inggris": { bg: "#d1fae5", text: "#065f46" },
   Fisika: { bg: "#fef9c3", text: "#854d0e" },
@@ -199,6 +249,11 @@ const WARNA_MAPEL: Record<string, { bg: string; text: string }> = {
   Agama: { bg: "#fff7ed", text: "#9a3412" },
   PKN: { bg: "#e0f2fe", text: "#0369a1" },
   BK: { bg: "#f1f5f9", text: "#475569" },
+  Informatika: { bg: "#cffafe", text: "#155e75" }, 
+  Sosiologi: { bg: "#f8fafc", text: "#334155" }, 
+  Geografi: { bg: "#d1fae5", text: "#047857" }, 
+  Kewalian: { bg: "#eef2ff", text: "#4338ca" }, 
+  "Seni Budaya": { bg: "#fef3c7", text: "#b45309" }, 
 };
 
 function getWarna(mapel: string) {
@@ -325,21 +380,22 @@ export default function GenerateJadwal() {
   const [activeHari, setActiveHari] = useState<Hari>("Senin");
   const [activeKelas, setActiveKelas] = useState("");
   const [durasi, setDurasi] = useState(45);
-  const [saveModal, setSaveModal] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [saveModal, setSaveModal] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Step 1: Kelas & Hari config
   const [kelasList, setKelasList] = useState<KelasConfig[]>([]);
   const [hariConfig, setHariConfig] = useState<HariConfig[]>([
-    { hari: "Senin", maxJam: 11 },
-    { hari: "Selasa", maxJam: 11 },
-    { hari: "Rabu", maxJam: 11 },
-    { hari: "Kamis", maxJam: 11 },
-    { hari: "Jumat", maxJam: 8 },
+    { hari: "Senin", maxJamSiswa: 12, maxJamGuru: 6 },
+    { hari: "Selasa", maxJamSiswa: 12, maxJamGuru: 6 },
+    { hari: "Rabu", maxJamSiswa: 10, maxJamGuru: 6 },
+    { hari: "Kamis", maxJamSiswa: 10, maxJamGuru: 6 },
+    { hari: "Jumat", maxJamSiswa: 8, maxJamGuru: 4 },
   ]);
   const [newKelas, setNewKelas] = useState("");
 
-  // Step 2: Mapel config — input pertemuan/minggu & jam/pertemuan
   const [mapelList, setMapelList] = useState<MapelConfig[]>([]);
   const [newMapel, setNewMapel] = useState("");
   const [newGuru, setNewGuru] = useState("");
@@ -356,7 +412,7 @@ export default function GenerateJadwal() {
         mapelList,
         hariConfig,
       );
-      setHasil(h);
+      setHasil(compactJadwal(h));
       setKonflikList(k);
       if (aktifKelas.length > 0) setActiveKelas(aktifKelas[0].nama);
       setStep(3);
@@ -364,13 +420,29 @@ export default function GenerateJadwal() {
     }, 1500);
   };
 
-  // Hitung total menit per kelas per minggu untuk mapel
   const totalMenitPerKelas = (m: MapelConfig) =>
     m.pertemuanPerMinggu * m.jamPerPertemuan * durasi;
 
+  const updateHari = (
+    hari: Hari,
+    field: "maxJamSiswa" | "maxJamGuru",
+    delta: number,
+  ) => {
+    setHariConfig(
+      hariConfig.map((hc) => {
+        if (hc.hari !== hari) return hc;
+        const max = field === "maxJamSiswa" ? 12 : 12;
+        const min = 1;
+        return {
+          ...hc,
+          [field]: Math.min(max, Math.max(min, hc[field] + delta)),
+        };
+      }),
+    );
+  };
+
   return (
     <div className={styles.layout}>
-      {/* Sidebar */}
       <aside
         className={`${styles.sidebar} ${expanded ? styles.sidebarExpanded : ""}`}
       >
@@ -436,7 +508,6 @@ export default function GenerateJadwal() {
         <div className={styles.overlay} onClick={() => setExpanded(false)} />
       )}
 
-      {/* Main */}
       <div className={`${styles.main} ${expanded ? styles.mainShifted : ""}`}>
         <header className={styles.topbar}>
           <div className={styles.topbarLeft}>
@@ -466,7 +537,6 @@ export default function GenerateJadwal() {
         </header>
 
         <div className={styles.content}>
-          {/* Stepper */}
           <div className={styles.stepper}>
             {[
               { n: 1, label: "Konfigurasi Kelas" },
@@ -508,11 +578,9 @@ export default function GenerateJadwal() {
             ))}
           </div>
 
-          {/* ── STEP 1 ── */}
           {step === 1 && (
             <div className={styles.stepContent}>
               <div className={styles.stepGrid}>
-                {/* Durasi */}
                 <div className={styles.card}>
                   <div className={styles.cardTitle}>Durasi 1 Jam Pelajaran</div>
                   <div className={styles.cardDesc}>
@@ -531,65 +599,95 @@ export default function GenerateJadwal() {
                   </div>
                 </div>
 
-                {/* Max jam per hari */}
                 <div className={styles.card}>
-                  <div className={styles.cardTitle}>Maksimal Jam Per Hari</div>
+                  <div className={styles.cardTitle}>Batas Jam Per Hari</div>
                   <div className={styles.cardDesc}>
-                    Atur jumlah jam pelajaran tiap hari. Jumat biasanya lebih
-                    pendek.
+                    Atur batas jam belajar <strong>siswa</strong> dan batas jam
+                    ngajar <strong>guru</strong> per hari secara terpisah. Ini
+                    mencegah guru terlalu banyak mengajar dalam satu hari.
                   </div>
                   <div className={styles.hariConfigList}>
+                    <div
+                      className={styles.hariConfigRow}
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        color: "#64748b",
+                      }}
+                    >
+                      <span className={styles.hariConfigNama}>Hari</span>
+                      <div style={{ display: "flex", gap: "8px", flex: 1 }}>
+                        <span style={{ flex: 1, textAlign: "center" }}>
+                          📚 Siswa (jam belajar)
+                        </span>
+                        <span style={{ flex: 1, textAlign: "center" }}>
+                          👨‍🏫 Guru (jam ngajar)
+                        </span>
+                      </div>
+                    </div>
+
                     {hariConfig.map((h) => (
                       <div key={h.hari} className={styles.hariConfigRow}>
                         <span className={styles.hariConfigNama}>{h.hari}</span>
-                        <div className={styles.hariConfigControl}>
-                          <button
-                            className={styles.counterBtn}
-                            onClick={() =>
-                              setHariConfig(
-                                hariConfig.map((hc) =>
-                                  hc.hari === h.hari
-                                    ? {
-                                        ...hc,
-                                        maxJam: Math.max(1, hc.maxJam - 1),
-                                      }
-                                    : hc,
-                                ),
-                              )
-                            }
+                        <div style={{ display: "flex", gap: "8px", flex: 1 }}>
+                          <div
+                            className={styles.hariConfigControl}
+                            style={{ flex: 1 }}
                           >
-                            −
-                          </button>
-                          <span className={styles.counterVal}>
-                            {h.maxJam} jam
-                          </span>
-                          <span className={styles.counterMenit}>
-                            ({h.maxJam * durasi} menit)
-                          </span>
-                          <button
-                            className={styles.counterBtn}
-                            onClick={() =>
-                              setHariConfig(
-                                hariConfig.map((hc) =>
-                                  hc.hari === h.hari
-                                    ? {
-                                        ...hc,
-                                        maxJam: Math.min(11, hc.maxJam + 1),
-                                      }
-                                    : hc,
-                                ),
-                              )
-                            }
+                            <button
+                              className={styles.counterBtn}
+                              onClick={() =>
+                                updateHari(h.hari, "maxJamSiswa", -1)
+                              }
+                            >
+                              −
+                            </button>
+                            <span className={styles.counterVal}>
+                              {h.maxJamSiswa} jam
+                            </span>
+                            <button
+                              className={styles.counterBtn}
+                              onClick={() =>
+                                updateHari(h.hari, "maxJamSiswa", 1)
+                              }
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <div
+                            className={styles.hariConfigControl}
+                            style={{ flex: 1 }}
                           >
-                            +
-                          </button>
+                            <button
+                              className={styles.counterBtn}
+                              onClick={() =>
+                                updateHari(h.hari, "maxJamGuru", -1)
+                              }
+                            >
+                              −
+                            </button>
+                            <span
+                              className={styles.counterVal}
+                              style={{ color: "#7c3aed" }}
+                            >
+                              {h.maxJamGuru} jam
+                            </span>
+                            <button
+                              className={styles.counterBtn}
+                              onClick={() =>
+                                updateHari(h.hari, "maxJamGuru", 1)
+                              }
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Daftar kelas */}
                 <div className={`${styles.card} ${styles.cardFull}`}>
                   <div className={styles.cardTitle}>Daftar Kelas Aktif</div>
                   <div className={styles.cardDesc}>
@@ -709,7 +807,6 @@ export default function GenerateJadwal() {
             </div>
           )}
 
-          {/* ── STEP 2 ── */}
           {step === 2 && (
             <div className={styles.stepContent}>
               <div className={styles.card}>
@@ -720,9 +817,8 @@ export default function GenerateJadwal() {
                   <strong>Pertemuan/minggu</strong> = berapa kali tatap muka per
                   minggu per kelas. &nbsp;
                   <strong>Jam/pertemuan</strong> = berapa jam pelajaran
-                  berturut-turut tiap pertemuan ({durasi} menit/jam). Jadwal
-                  akan diisi blok jam konsekutif, tidak akan terpotong
-                  istirahat.
+                  berturut-turut tiap pertemuan ({durasi} menit/jam). Nama guru
+                  otomatis tersimpan dalam <strong>huruf kapital semua</strong>.
                 </div>
 
                 <div className={styles.mapelTableWrap}>
@@ -752,7 +848,13 @@ export default function GenerateJadwal() {
                               {m.namaMapel}
                             </div>
                           </td>
-                          <td className={styles.mtd}>{m.namaGuru}</td>
+
+                          <td
+                            className={styles.mtd}
+                            style={{ fontWeight: 600, letterSpacing: "0.03em" }}
+                          >
+                            {m.namaGuru}
+                          </td>
                           <td className={styles.mtd}>
                             <div className={styles.jamControl}>
                               <button
@@ -881,7 +983,6 @@ export default function GenerateJadwal() {
                   </table>
                 </div>
 
-                {/* Tambah mapel */}
                 <div className={styles.addMapelRow}>
                   <input
                     className={styles.addInput}
@@ -891,9 +992,9 @@ export default function GenerateJadwal() {
                   />
                   <input
                     className={styles.addInput}
-                    placeholder="Nama guru"
+                    placeholder="Nama guru (otomatis kapital)"
                     value={newGuru}
-                    onChange={(e) => setNewGuru(e.target.value)}
+                    onChange={(e) => setNewGuru(e.target.value.toUpperCase())}
                   />
                   <div className={styles.addInputGroup}>
                     <label className={styles.addInputLabel}>Pertemuan</label>
@@ -928,7 +1029,7 @@ export default function GenerateJadwal() {
                           {
                             id: `m${Date.now()}`,
                             namaMapel: newMapel.trim(),
-                            namaGuru: newGuru.trim(),
+                            namaGuru: newGuru.trim().toUpperCase(),
                             pertemuanPerMinggu: Number(newPertemuan) || 2,
                             jamPerPertemuan: Number(newJamPertemuan) || 2,
                           },
@@ -1006,7 +1107,6 @@ export default function GenerateJadwal() {
             </div>
           )}
 
-          {/* ── STEP 3 ── */}
           {step === 3 && hasil && (
             <div className={styles.stepContent}>
               {konflikList.length > 0 ? (
@@ -1052,7 +1152,6 @@ export default function GenerateJadwal() {
                 </div>
               )}
 
-              {/* Filter */}
               <div className={styles.filterWrap}>
                 <div className={styles.filterGroup}>
                   <span className={styles.filterLabel}>Kelas:</span>
@@ -1084,7 +1183,6 @@ export default function GenerateJadwal() {
                 </div>
               </div>
 
-              {/* Tabel hasil */}
               <div className={styles.hasilTableWrap}>
                 <table className={styles.hasilTable}>
                   <thead>
@@ -1103,21 +1201,44 @@ export default function GenerateJadwal() {
                   </thead>
                   <tbody>
                     {JAM_SLOTS.map((slot, idx) => {
-                      const isIst = slot === "IST";
+                      const isIst = slot === "IST1" || slot === "IST2";
+                      const isDoa = slot === "DOA";
+                      const istLabel =
+                        slot === "IST1"
+                          ? "Istirahat 09.00 - 09.20"
+                          : "Istirahat 12.20 - 12.45";
                       return (
                         <tr
                           key={idx}
-                          className={isIst ? styles.htrIst : styles.htr}
+                          className={
+                            isDoa
+                              ? styles.htrDoa
+                              : isIst
+                                ? styles.htrIst
+                                : styles.htr
+                          }
                         >
-                          <td className={styles.htdJam}>{isIst ? "" : slot}</td>
+                          <td className={styles.htdJam}>
+                            {isDoa || isIst ? "" : slot}
+                          </td>
                           <td className={styles.htdWaktu}>
-                            {isIst ? "Istirahat" : JAM_WAKTU[idx]}
+                            {isDoa
+                              ? "06.30 - 06.45"
+                              : isIst
+                                ? istLabel
+                                : JAM_WAKTU[idx]}
                           </td>
                           {aktifKelas.map((k) => {
                             if (isIst)
                               return (
                                 <td key={k.nama} className={styles.htdIst}>
-                                  Istirahat
+                                  {istLabel}
+                                </td>
+                              );
+                            if (isDoa)
+                              return (
+                                <td key={k.nama} className={styles.htdDoa}>
+                                  🙏 Doa
                                 </td>
                               );
                             const jamNum = slot as number;
@@ -1146,7 +1267,7 @@ export default function GenerateJadwal() {
                                     {cell.mapel}
                                   </span>
                                   <span className={styles.htdGuru}>
-                                    {cell.guru.split(" ").slice(-2).join(" ")}
+                                    {cell.guru}
                                   </span>
                                 </div>
                               </td>
@@ -1224,12 +1345,21 @@ export default function GenerateJadwal() {
                           });
                         }),
                       );
-                      setSaveModal({ type: "success", message: `Jadwal untuk ${kelasList.filter(k=>k.aktif).length} kelas berhasil disimpan ke database.` });
+                      setSaveModal({
+                        type: "success",
+                        message: `Jadwal untuk ${kelasList.filter((k) => k.aktif).length} kelas berhasil disimpan ke database.`,
+                      });
                     } catch (err) {
-                      alert(
-                        "❌ Gagal simpan: " +
-                          (err instanceof Error ? err.message : "Terjadi kesalahan"),
-                      );
+                      setSaveModal({
+                        type: "error",
+                        message:
+                          "Gagal simpan: " +
+                          (err instanceof Error
+                            ? err.message
+                            : "Terjadi kesalahan"),
+                      });
+                    } finally {
+                      setSaving(false);
                     }
                   }}
                 >
@@ -1255,7 +1385,6 @@ export default function GenerateJadwal() {
         </div>
       </div>
 
-      {/* Modal Logout */}
       {showLogout && (
         <div
           className={styles.modalOverlay}
@@ -1299,40 +1428,66 @@ export default function GenerateJadwal() {
           </div>
         </div>
       )}
-      {/* Modal Save Result */}
+
       {saveModal && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setSaveModal(null)}
-        >
+        <div className={styles.modalOverlay} onClick={() => setSaveModal(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div
               className={styles.modalIcon}
               style={{
-                background: saveModal.type === "success" ? "#f0fdf4" : "#fef2f2",
+                background:
+                  saveModal.type === "success" ? "#f0fdf4" : "#fef2f2",
               }}
             >
               {saveModal.type === "success" ? (
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#16a34a"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               ) : (
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="15" y1="9" x2="9" y2="15" />
                   <line x1="9" y1="9" x2="15" y2="15" />
                 </svg>
               )}
             </div>
-            <h3 className={styles.modalTitle} style={{ color: saveModal.type === "success" ? "#16a34a" : "#ef4444" }}>
-              {saveModal.type === "success" ? "Jadwal Tersimpan!" : "Gagal Menyimpan"}
+            <h3
+              className={styles.modalTitle}
+              style={{
+                color: saveModal.type === "success" ? "#16a34a" : "#ef4444",
+              }}
+            >
+              {saveModal.type === "success"
+                ? "Jadwal Tersimpan!"
+                : "Gagal Menyimpan"}
             </h3>
             <p className={styles.modalDesc}>{saveModal.message}</p>
             <div className={styles.modalActions}>
               <button
                 className={styles.confirmBtn}
-                style={{ background: saveModal.type === "success" ? "#16a34a" : "#ef4444" }}
+                style={{
+                  background:
+                    saveModal.type === "success" ? "#16a34a" : "#ef4444",
+                }}
                 onClick={() => setSaveModal(null)}
               >
                 OK
@@ -1344,5 +1499,3 @@ export default function GenerateJadwal() {
     </div>
   );
 }
-
-

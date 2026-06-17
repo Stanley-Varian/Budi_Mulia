@@ -77,7 +77,13 @@
 .materiTanggal { font-size: 11px; color: #94a3b8; }
 
 /* ── Materi Actions ── */
-.materiActions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.materiActions { display: flex; flex-direction: row; flex-wrap: wrap; gap: 6px; flex-shrink: 0; align-items: center; justify-content: flex-end; max-width: 160px; }
+.openBtn { width: 34px; height: 34px; border-radius: 10px; background: #f0fdf4; border: none; color: #16a34a; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
+.openBtn:hover { background: #dcfce7; }
+.downloadBtn { width: 34px; height: 34px; border-radius: 10px; background: #fefce8; border: none; color: #ca8a04; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
+.downloadBtn:hover { background: #fef08a; }
+.shareBtn { width: 34px; height: 34px; border-radius: 10px; background: #fdf4ff; border: none; color: #9333ea; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
+.shareBtn:hover { background: #f3e8ff; }
 .editBtn { width: 34px; height: 34px; border-radius: 10px; background: #eff6ff; border: none; color: #2952cc; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
 .editBtn:hover { background: #dbeafe; }
 .deleteBtn { width: 34px; height: 34px; border-radius: 10px; background: #fef2f2; border: none; color: #ef4444; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; }
@@ -128,4 +134,5 @@
   .kelasTag { display: none; }
   .mainShifted { margin-left: 60px; }
   .formRow { flex-direction: column; }
+  .materiActions { max-width: 80px; }
 }
