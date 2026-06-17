@@ -229,8 +229,6 @@ export default function DashboardSiswa() {
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
-
-  // State untuk keluar kelas
   const [showLeave, setShowLeave] = useState(false);
   const [leaveTarget, setLeaveTarget] = useState<Mapel | null>(null);
   const [leaveLoading, setLeaveLoading] = useState(false);

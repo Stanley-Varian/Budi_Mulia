@@ -18,7 +18,6 @@ const fetchWithAuth = async (endpoint: string) => {
   return data;
 };
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
 
 export const login = async (username: string, password: string) => {
   const res = await fetch(`${BASE_URL}/api/auth/login`, {
@@ -46,22 +45,20 @@ export const getUser = () => {
   return user ? JSON.parse(user) : null;
 };
 
-// ── Profil ───────────────────────────────────────────────────────────────────
-
 
 export const getProfil = async () => {
   const data = await fetchWithAuth("/api/siswa/profil");
   return data.data;
 };
 
-// ── Jadwal ───────────────────────────────────────────────────────────────────
+
 export const getJadwal = async (tahunAjaran?: string) => {
   const query = tahunAjaran ? `?tahunAjaran=${tahunAjaran}` : "";
   const data = await fetchWithAuth(`/api/siswa/jadwal${query}`);
   return data.data;
 };
 
-// ── Materi ───────────────────────────────────────────────────────────────────
+
 
 export const getMapelList = async () => {
   const data = await fetchWithAuth("/api/siswa/materi");
@@ -76,7 +73,7 @@ export const getMateriByMapel = async (mapel: string, pertemuan?: number) => {
   return data.data;
 };
 
-// ── Pengumuman ────────────────────────────────────────────────────────────────
+
 export const getPengumuman = async (page = 1, limit = 20) => {
   const data = await fetchWithAuth(
     `/api/siswa/pengumuman?page=${page}&limit=${limit}`
@@ -88,7 +85,7 @@ export const getPengumumanDetail = async (id: string) => {
   return data.data;
 };
 
-// ── Kelas ─────────────────────────────────────────────────────────────────────
+
 export const joinKelas = async (kodeKelas: string) => {
   const token = getToken();
   const res = await fetch(`${BASE_URL}/api/siswa/kelas/join`, {
