@@ -3,13 +3,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./dashboard-siswa.module.css";
-import { joinKelas, leaveKelas, getMapelList, getUser } from "@/lib/api/siswa";
+import {
+  joinKelas,
+  leaveKelas,
+  getMapelList,
+  getUser,
+  getKelasSiswa,
+} from "@/lib/api/siswa";
 import { useTranslation } from "@/lib/api/UseTranslation";
 import NotifBell from "@/components/NotifBell";
 import { useNotif } from "@/lib/api/useNotif";
 
 type Mapel = {
-  id: string | number;
+  id: string | null;
   mapel: string;
   guru: string;
   updatedAt: string;
@@ -284,20 +290,35 @@ export default function DashboardSiswa() {
     setUser(getUser());
   }, []);
   useEffect(() => {
-    getMapelList()
-      .then((data) => setMapelList(data))
+    Promise.all([getMapelList(), getKelasSiswa()])
+      .then(([materi, kelas]) => {
+        const merged = materi.map((m: Mapel) => {
+          const found = kelas.find(
+            (k: { mapel: string; id: string }) => k.mapel === m.mapel,
+          );
+          return { ...m, id: found?.id ?? null };
+        });
+        setMapelList(merged);
+      })
       .catch((err) => setMapelError(err.message || t("state.gagal")))
       .finally(() => setMapelLoading(false));
   }, []);
 
   const reloadMapel = () => {
     setMapelLoading(true);
-    getMapelList()
-      .then((data) => setMapelList(data))
+    Promise.all([getMapelList(), getKelasSiswa()])
+      .then(([materi, kelas]) => {
+        const merged = materi.map((m: Mapel) => {
+          const found = kelas.find(
+            (k: { mapel: string; id: string }) => k.mapel === m.mapel,
+          );
+          return { ...m, id: found?.id ?? null };
+        });
+        setMapelList(merged);
+      })
       .catch((err) => setMapelError(err.message || t("state.gagal")))
       .finally(() => setMapelLoading(false));
   };
-
   const handleJoinKelas = async () => {
     if (!kodeInput.trim()) {
       setJoinError("Kode kelas tidak boleh kosong.");
@@ -323,6 +344,7 @@ export default function DashboardSiswa() {
   };
 
   const handleLeaveKelas = async () => {
+    console.log("leaveTarget =", leaveTarget);
     if (!leaveTarget) return;
     setLeaveLoading(true);
     setLeaveError(null);
@@ -811,7 +833,8 @@ export default function DashboardSiswa() {
                           <polyline points="14 2 14 8 20 8" />
                         </svg>
                       </button>
-                      {/* Tombol keluar kelas */}
+                      {/* Tombol keluar kelas — hanya tampil kalau join via kode */}
+
                       <button
                         className={styles.cardBtn}
                         style={{ color: "#ef4444" }}

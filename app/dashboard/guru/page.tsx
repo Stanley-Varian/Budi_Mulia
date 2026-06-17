@@ -42,9 +42,8 @@ function getMapelMeta(mapel: string) {
 
 const MAPEL_OPTIONS = Object.keys(MAPEL_META);
 const KELAS_OPTIONS = [
-  "10 A","10 B","10 C","10 D",
-  "11 A","11 B","11 C","11 D",
-  "12 A","12 B","12 C","12 D",
+  "10 I","10 II","10 III","10 IV",
+  "10 V","10 VI","10 VII",
 ];
 const TABS = ["Baru","Terbaru","Minggu Ini","Bulan Ini"];
 const NAV = [

@@ -109,6 +109,20 @@ export const getKelasSiswa = async () => {
   return data.data;
 };
 
+export async function leaveKelas(id: string) {
+  const token = getToken();
+  const res = await fetch(`${BASE_URL}/api/siswa/kelas/${id}/leave`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal keluar kelas");
+  return data;
+}
+
 // ── Ekskul ────────────────────────────────────────────────────────────────────
 
 export const getEkskul = async () => {
@@ -116,24 +130,3 @@ export const getEkskul = async () => {
   return data.data;
 };
 
-export async function leaveKelas(id: string) {
-  const token = getToken();
-
-  const res = await fetch(
-    `${BASE_URL}/api/siswa/kelas/${id}/leave`,
-    {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message);
-  }
-
-  return data;
-}
