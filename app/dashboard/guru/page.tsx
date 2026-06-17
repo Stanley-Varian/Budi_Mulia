@@ -24,16 +24,23 @@ type Kelas = {
 };
 
 const MAPEL_META: Record<string, { warna: string; icon: string }> = {
-  "Matematika":       { warna: "#dbeafe", icon: "math"  },
-  "Bahasa Indonesia": { warna: "#fce7f3", icon: "book"  },
-  "Bahasa Inggris":   { warna: "#d1fae5", icon: "book"  },
-  "Fisika":           { warna: "#fef9c3", icon: "atom"  },
-  "Kimia":            { warna: "#ede9fe", icon: "flask" },
-  "Biologi":          { warna: "#ffedd5", icon: "leaf"  },
-  "Sejarah":          { warna: "#f0fdf4", icon: "clock" },
-  "Ekonomi":          { warna: "#fdf2f8", icon: "chart" },
-  "PJOK":             { warna: "#dcfce7", icon: "sport" },
-  "Agama":            { warna: "#fff7ed", icon: "book"  },
+"Matematika Wajib":                { warna: "#dbeafe", icon: "math"   },
+"Bahasa Indonesia":          { warna: "#fce7f3", icon: "book"   },
+"Bahasa Inggris":            { warna: "#d1fae5", icon: "book"   },
+"Fisika":                    { warna: "#fef9c3", icon: "atom"   },
+"Kimia":                     { warna: "#ede9fe", icon: "flask"  },
+"Biologi":                   { warna: "#ffedd5", icon: "leaf"   },
+"Sejarah":                   { warna: "#f0fdf4", icon: "clock"  },
+"Ekonomi":                   { warna: "#fdf2f8", icon: "chart"  },
+"PJOK":                      { warna: "#dcfce7", icon: "sport"  },
+"Agama":          { warna: "#fff7ed", icon: "book"   },
+"PKN":                       { warna: "#e0f2fe", icon: "flag"   },
+"Sosiologi":                 { warna: "#fdf4ff", icon: "people" },
+"Geografi":                  { warna: "#f0fdf4", icon: "map"    },
+"Seni Budaya":               { warna: "#fff1f2", icon: "art"    },
+"Informatika":               { warna: "#f0f9ff", icon: "code"   },
+"Prakarya & Kewirausahaan":  { warna: "#fffbeb", icon: "tool"   },
+"BK":                        { warna: "#f5f3ff", icon: "heart"  },
 };
 
 function getMapelMeta(mapel: string) {
